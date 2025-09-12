@@ -34,13 +34,18 @@ const checkUser=(token:string)=>{
     if(!token){
         return null;
     }
-    if(JWT_USER_PASSWORD){
+    if(!JWT_USER_PASSWORD){
         return null;
     }
     const decoded= jwt.verify(token,JWT_USER_PASSWORD)
     if(!decoded||!((decoded as JwtPayload).id)){
         return null;
     }
+
+    if(!decoded){
+        return null;
+    }
+    console.log(decoded,"This is decoede jibfhshjvbfd")
     return (decoded as JwtPayload).id
 }
 
@@ -53,6 +58,7 @@ wss.on('connection',(ws,request)=>{
     const queryParams= new URLSearchParams(url.split("?")[1]);
     const token:any = queryParams.get("token");
     const userId=checkUser(token)
+    console.log(userId)
     if(!userId){
         ws.send(JSON.stringify({
             message:"Invalid Token"
@@ -69,7 +75,8 @@ wss.on('connection',(ws,request)=>{
     ws.on("message",async(data)=>{
         const parsedData=JSON.parse(data as unknown as string);
 
-        if(parsedData.type=='join_room'){
+        try {
+            if(parsedData.type=='join_room'){
             const user=users.find(x=>x.ws==ws);
             const checkRoomId= await prisma.room.findFirst({
                 where:{
@@ -102,7 +109,6 @@ wss.on('connection',(ws,request)=>{
             const message=parsedData.message;
 
             const messageData={
-                type:"chat",
                 message:message,
                 roomId,
                 userId
@@ -114,12 +120,20 @@ wss.on('connection',(ws,request)=>{
             users.forEach(user=>{
                 if(user.rooms.includes(roomId)){
                     user.ws.send(JSON.stringify({
-                       messageData
+                        type:"chat",
+                        message:message,
+                        roomId,
+                        userId
+                       
                     }))
                 }
             })
             
 
+        }
+
+        } catch (error) {
+            console.log(error)
         }
 
 

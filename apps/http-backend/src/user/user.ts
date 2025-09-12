@@ -143,13 +143,46 @@ userRouter.post('/room',userMiddleware,async(req:AuthedRequest,res)=>{
 
 userRouter.get("/chats/:roomId",async(req,res)=>{
     const roomId= Number(req.params.roomId);
-    const message= await prisma.chat.findMany({
+    console.log(roomId)
+    try {
+        const messages= await prisma.chat.findMany({
+            where:{
+                roomId
+            },
+            orderBy:{
+                id:"desc"
+            },
+            take:50 
+        })
+
+
+
+        res.status(200).json({
+            messages
+        })
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({
+            message:"Internal Server Error"
+        })
+    }
+})
+
+
+userRouter.get('/room/:slug',async(req,res)=>{
+    const slug=req.params.slug;
+    const roomId=await prisma.room.findFirst({
         where:{
-            id:roomId
-        },
-        orderBy:{
-            id:"desc"
-        },
-        take:50 
+            slug:slug
+        }
+    })
+    if(!roomId){
+        res.status(404).json({
+            message:"Room not found"
+        })
+        return;
+    }
+    res.status(200).json({
+        roomId:roomId?.id
     })
 })
