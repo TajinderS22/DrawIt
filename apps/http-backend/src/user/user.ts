@@ -48,6 +48,7 @@ userRouter.post('/signup',async(req ,res)=>{
         const hashedPassword=await bcrypt.hash(plainPassword,saltRounds)
         data.password=hashedPassword
         const parsed = UserSchemaZod.safeParse(data)
+        console.log(parsed)
         if (!parsed.success) {
             return res.status(400).json({ message: "Invalid inputs", errors: parsed.error })
         }
@@ -152,7 +153,7 @@ userRouter.get("/chats/:roomId",async(req,res)=>{
             orderBy:{
                 id:"desc"
             },
-            take:50 
+            take:500 
         })
 
 

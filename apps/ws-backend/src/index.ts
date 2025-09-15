@@ -31,6 +31,7 @@ const users:User[]=[];
 
 
 const checkUser=(token:string)=>{
+    console.log(token)
     if(!token){
         return null;
     }
@@ -57,20 +58,25 @@ wss.on('connection',(ws,request)=>{
     }
     const queryParams= new URLSearchParams(url.split("?")[1]);
     const token:any = queryParams.get("token");
-    const userId=checkUser(token)
-    console.log(userId)
-    if(!userId){
-        ws.send(JSON.stringify({
-            message:"Invalid Token"
-        }))
-        ws.close()
-    }
+    console.log(token)
+    try {
+        
+        const userId=checkUser(token)
+        console.log(userId)
+        if(!userId){
+            ws.send(JSON.stringify({
+                message:"Invalid Token"
+            }))
+            ws.close()
+        }
 
-    users.push({
-        userId:userId,
-        rooms:[],
-        ws
-    })
+        users.push({
+            userId:userId,
+            rooms:[],
+            ws
+        })
+
+    
 
     ws.on("message",async(data)=>{
         const parsedData=JSON.parse(data as unknown as string);
@@ -138,4 +144,7 @@ wss.on('connection',(ws,request)=>{
 
 
     });
+    } catch (error) {
+        console.log(error)
+    }
 })
