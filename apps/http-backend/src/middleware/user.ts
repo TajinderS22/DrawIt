@@ -28,6 +28,7 @@ export const userMiddleware= async(req:AuthedRequest ,res:Response , next:NextFu
     try {
         const decoded:any=jwt.verify(id,JWT_USER_PASSWORD)
         if(decoded){
+            console.log(decoded)
             req.userId=decoded.id;
             next()
         }else{

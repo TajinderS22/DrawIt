@@ -24,8 +24,12 @@ model Users{
   password    String
   phtotUrl    String?
 
-  rooms       Room[]
+  rooms       Room[]      @relation("UserRooms")
+  
   chatMessages  Chat[]
+
+  adminRooms   Room[]   @relation("AdminRelation") 
+
 
   createdAt   DateTime  @default(now())   
 
@@ -38,7 +42,9 @@ model Room {
   createdAt   DateTime @default(now())
   adminId     String
 
-  admin       Users    @relation(fields: [adminId], references: [id])
+  admin       Users    @relation("AdminRelation",fields: [adminId], references: [id])
+  users       Users[]  @relation("UserRooms")
+
   chats       Chat[]
 }
 

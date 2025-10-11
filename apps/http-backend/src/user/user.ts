@@ -78,6 +78,7 @@ userRouter.post("/signin",async(req,res)=>{
                 email:data.email
             }
         })
+        console.log(user)
         if(!user){
             res.status(404).json({
                 message:"User not registered Please Signup"
@@ -114,9 +115,66 @@ userRouter.post("/signin",async(req,res)=>{
 })
 
 
-userRouter.post('/room',userMiddleware,async(req:AuthedRequest,res)=>{
+
+userRouter.get('/rooms',userMiddleware,async(req:AuthedRequest ,res )=>{
     const userId=req.userId;
+    try{
+
+        const rooms=await prisma.users.findFirst({
+            where:{
+                id:userId
+            },
+            select:{
+                rooms:true
+            }
+        })
+        console.log(rooms)
+        res.status(200).json({
+            rooms:rooms
+        })
+
+    }catch(err){
+
+        console.error(err)
+
+    }
+})
+
+
+userRouter.post('/room/join',userMiddleware,async(req:AuthedRequest,res)=>{
+    const userId=req.userId;
+    const roomId=req.body.roomId;
+    const room=await prisma.room.findFirst({
+        where:{
+            id:roomId
+        }
+    })
+    if(!room){
+        res.status(404).json({
+            message:"room not found"
+        })
+        return
+    }
+
+    const result=await prisma.room.update({
+        where:{id:roomId},
+        data:{
+            users:{
+                connect:{id:userId}
+            }
+        }
+    })
+    res.status(200).json({
+        message:result
+    })
+})
+
+
+userRouter.post('/room/create',userMiddleware,async(req:AuthedRequest,res)=>{
+    const userId=req.userId;
+    console.log(req.body)
     const data=CreateRoomSchema.safeParse(req.body)
+    console.log(data)
     if(!data.success||!userId){
         res.json({
             message:"Incorrect inputs"
@@ -126,7 +184,7 @@ userRouter.post('/room',userMiddleware,async(req:AuthedRequest,res)=>{
     try {
         const room = await prisma.room.create({
             data:{
-                slug:data.data.name,
+                slug:data.data.slug,
                 adminId:userId
             }
         })
@@ -170,7 +228,36 @@ userRouter.get("/chats/:roomId",async(req,res)=>{
 })
 
 
-userRouter.get('/room/:slug',async(req,res)=>{
+const checkUser= async (token:any)=>{
+    const decoded= jwt.verify(token,JWT_USER_PASSWORD)
+    console.log(decoded)
+
+    if(decoded){
+        return decoded
+    }else{
+        return null;
+    }
+
+}
+
+userRouter.post("/verify",async(req ,res)=>{
+    const token= req.body.data.jwt;
+    try {
+        const user = await checkUser(token)
+        console.log(user)
+        res.status(200).json({
+            user:user
+        })
+
+    } catch (err) {
+        console.log(err)
+    }
+    
+})
+
+
+
+userRouter.get('/canvas/:slug',async(req,res)=>{
     const slug=req.params.slug;
     const roomId=await prisma.room.findFirst({
         where:{

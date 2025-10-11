@@ -18,7 +18,7 @@ const JWT = ({roomId}:{roomId:number}) => {
   
 
   return (
-    <RoomCanvas roomId={roomId} jwt={token}></RoomCanvas>
+    <RoomCanvas roomId={roomId} jwtToken={token} ></RoomCanvas>
   )
 }
 

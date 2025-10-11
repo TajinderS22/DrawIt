@@ -31,7 +31,6 @@ const users:User[]=[];
 
 
 const checkUser=(token:string)=>{
-    console.log(token)
     if(!token){
         return null;
     }
@@ -46,7 +45,6 @@ const checkUser=(token:string)=>{
     if(!decoded){
         return null;
     }
-    console.log(decoded,"This is decoede jibfhshjvbfd")
     return (decoded as JwtPayload).id
 }
 
@@ -58,11 +56,9 @@ wss.on('connection',(ws,request)=>{
     }
     const queryParams= new URLSearchParams(url.split("?")[1]);
     const token:any = queryParams.get("token");
-    console.log(token)
     try {
         
         const userId=checkUser(token)
-        console.log(userId)
         if(!userId){
             ws.send(JSON.stringify({
                 message:"Invalid Token"
@@ -93,7 +89,6 @@ wss.on('connection',(ws,request)=>{
                 ws.send(JSON.stringify({
                     message:"roomId is invalid"
                 }))
-                
             }else{
                 user?.rooms.push(parsedData.roomId);
             }
@@ -108,11 +103,49 @@ wss.on('connection',(ws,request)=>{
             user.rooms=user?.rooms.filter(x=>x==parsedData.room)
         }
 
+        if(parsedData.type=='chat_delete_shape'){
+
+            const roomId=parsedData.roomId;
+            const userId=parsedData.userId;
+
+            const deletIds:number[]=[]
+
+            const data=JSON.parse(parsedData.message)
+            console.log(data)
+            const MessageToBeDeletedId=data.data.id;
+            const alreadyDeleted=(num:number)=>{
+                const deleted=deletIds.find((x:number)=> x==num )
+                console.log(deleted)
+            }
+            alreadyDeleted(MessageToBeDeletedId)
+            await prisma.chat.delete({
+                where:{
+                    id:MessageToBeDeletedId
+                }
+            })
+        
+
+    
+
+            users.forEach(user=>{
+                if(user.rooms.includes(roomId)){
+                    user.ws.send(JSON.stringify({
+                        type:"chat_delete_shape",
+                        message:"Shape Deleted",
+                        roomId,
+                        userId
+                       
+                    }))
+                }
+            })
+        }
+
 
         if(parsedData.type=='chat'){
 
             const roomId=parsedData.roomId;
             const message=parsedData.message;
+            const userId=parsedData.userId;
 
             const messageData={
                 message:message,

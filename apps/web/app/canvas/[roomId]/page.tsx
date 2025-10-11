@@ -1,5 +1,5 @@
+
 import JWT from "../../../Components/JWT"
-import RoomCanvas from "../../../Components/RoomCanvas"
 
 const page= async ({params}:{
     params:{

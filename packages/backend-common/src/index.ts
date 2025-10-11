@@ -11,5 +11,5 @@ export const UserSchemaZod=z.object({
 })
 
 export const CreateRoomSchema=z.object({
-    name:z.string()
+    slug:z.string()
 })

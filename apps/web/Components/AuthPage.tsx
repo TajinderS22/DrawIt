@@ -31,7 +31,7 @@ const AuthPage=({isSignin}:{
                setAlertType("success")
                console.log(response.data)
                setTimeout(() => {
-                 router.push("/chat");
+                 router.push("/dashboard");
                }, 1500);
              }
         } catch (error) {
