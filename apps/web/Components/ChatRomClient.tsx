@@ -1,90 +1,96 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import useSocket from "../Hooks/useSocket"
-import { parse } from "path"
+import { useEffect, useState } from "react";
+import useSocket from "../Hooks/useSocket";
+import { parse } from "path";
 
-const ChatRoomClient=({
-    messages,
-    roomId
-}:{
-    messages:{message:string }[],
-    roomId:number
-})=>{
+const ChatRoomClient = ({
+  messages,
+  roomId,
+}: {
+  messages: { message: string }[];
+  roomId: number;
+}) => {
+  const [token, setToken] = useState<string | null>(null);
 
+  useEffect(() => {
+    setToken(localStorage.getItem("jwt"));
+  }, []);
 
+  const { socket, loading } = useSocket(token);
+  const [chats, setChats] = useState(messages);
+  const [roomConnected, setRoomConnected] = useState(false);
+  const [currentMessage, setCurrentMessage] = useState<string>("");
 
+  useEffect(() => {
+    if (socket) {
+      socket.send(
+        JSON.stringify({
+          type: "join_room",
+          roomId,
+        })
+      );
+      setRoomConnected(true);
+    }
+  }, [socket]);
 
-    const {socket,loading}=useSocket();
-    const [chats,setChats]=useState(messages);
-    const [roomConnected,setRoomConnected]=useState(false);
-    const [currentMessage, setCurrentMessage] = useState<string>("");
-
-    useEffect(()=>{
-        if (socket) {
-            socket.send(JSON.stringify({
-                type:"join_room",
-                roomId
-            }));
-            setRoomConnected(true)
+  useEffect(() => {
+    if (socket && !loading) {
+      socket.onmessage = (event) => {
+        const parsedData = JSON.parse(event.data);
+        if (parsedData.type == "chat") {
+          setChats((c) => [...c, { message: parsedData.message }]);
         }
-    },[socket])
+      };
+    }
 
+    return () => {
+      socket?.close();
+    };
+  }, [socket, loading]);
 
-    useEffect(()=>{
-        if(socket&&!loading){
-            socket.onmessage=(event)=>{
-                
-                const parsedData=JSON.parse(event.data);
-                console.log(parsedData)
-                if(parsedData.type=='chat'){
-                    setChats(c=>[...c , {message:parsedData.message}])
-                }
-            }
-        }
+  return (
+    <div className="p-1">
+      <div className="max-h-[90svh] overflow-scroll">
+        {chats.map((m, index) => (
+          <div
+            key={index}
+            className="bg-amber-200 p-1 m-1 w-4/12 overflow-x-scroll rounded-xl"
+          >
+            {m.message}
+          </div>
+        ))}
+      </div>
 
-        return ()=>{
-            socket?.close()
-        }
+      <div className="flex ">
+        <input
+          type="text"
+          value={currentMessage}
+          className="bg-gray-300/30 rounded-md"
+          onChange={(e) => {
+            setCurrentMessage(e.target.value);
+          }}
+        />
 
-    },[socket,loading])
+        <button
+          className="bg-green-300 p-2 mx-2 rounded-md"
+          onClick={() => {
+            socket?.send(
+              JSON.stringify({
+                type: "chat",
+                roomId,
+                message: currentMessage,
+              })
+            );
 
-    return(
-        <div className="p-1">
-            <div className="max-h-[90svh] overflow-scroll">
-            {chats.map((m, index) => (
-              <div key={index} className="bg-amber-200 p-1 m-1 w-4/12 overflow-x-scroll rounded-xl">
-                {m.message}
-              </div>
-            ))}           
-        </div>
-
-            <div className="flex ">
-                <input type="text" value={currentMessage} className="bg-gray-300/30 rounded-md" onChange={e=>{
-                        setCurrentMessage(e.target.value)
-                    }
-                } />
-
-                <button
-                 className="bg-green-300 p-2 mx-2 rounded-md"
-                 onClick={()=>{
-                    socket?.send(JSON.stringify({
-                        type:"chat",
-                        roomId,
-                        message:currentMessage,
-                    }))
-
-                    setCurrentMessage('')
-                }}>
-                    send
-                </button>
-            </div>
-
-        </div>
-    )
-
-
-}
-
+            setCurrentMessage("");
+          }}
+        >
+          send
+        </button>
+      </div>
+    </div>
+  );
+};
 
 export default ChatRoomClient;

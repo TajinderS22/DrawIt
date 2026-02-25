@@ -25,6 +25,7 @@ const Page = () => {
 
 
   const getUserRooms=async()=>{
+
     const rooms= await axios.get(BACKEND_URL+"/user/rooms",{
       headers:{
         Authorization:localStorage.getItem('jwt')
@@ -53,7 +54,6 @@ const Page = () => {
         authorization:localStorage.getItem('jwt')
       }
     })
-    console.log(result.data.message.id)
     router.push(BACKEND_URL+'/canvas/'+result.data.message.id)
 
 

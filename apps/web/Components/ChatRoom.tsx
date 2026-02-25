@@ -7,7 +7,6 @@ const getChats=async(roomId:number)=>{
     
     const response=await axios.get(BACKEND_URL+`/user/chats/${roomId}`);
 
-    console.log(response.data,"testing EP")
     return response.data.messages;
 }
 

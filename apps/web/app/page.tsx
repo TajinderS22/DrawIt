@@ -29,7 +29,6 @@ export default function LandingPage() {
 
       {/* Features Section */}
       <section className="bg-gray-900 py-20 px-6">
-        <h2 className="text-3xl font-bold text-center mb-12">Why DrawIt?</h2>
         <div className="max-w-6xl mx-auto grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
           {[
             {
@@ -37,8 +36,8 @@ export default function LandingPage() {
               desc: "Work with your team live. Instant updates and no page refreshes.",
             },
             {
-              title: "🧱 Infinite Canvas",
-              desc: "Zoom, pan, and sketch anywhere — never run out of space.",
+              title: "Why DrawIt?",
+              desc: "Simple, secure and fast",
             },
             {
               title: "📦 Open Source",
@@ -58,7 +57,7 @@ export default function LandingPage() {
             },
           ].map(({ title, desc }, idx) => (
             <div key={idx} className="bg-gray-800 p-6 rounded-lg shadow hover:shadow-xl transition">
-              <h3 className="text-xl font-semibold mb-2">{title}</h3>
+              <h3 className={` ${title=="Why DrawIt?"?"font-extrabold text-3xl text-blue-400":"text-xl font-semibold"}  mb-2`}>{title}</h3>
               <p className="text-gray-400">{desc}</p>
             </div>
           ))}
@@ -77,7 +76,7 @@ export default function LandingPage() {
           rel="noopener noreferrer"
           className="underline hover:text-white"
         >
-          @TajinderSingh
+          TajinderSingh
         </a>
       </footer>
     </div>

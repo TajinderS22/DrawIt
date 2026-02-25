@@ -10,6 +10,10 @@ app.use(cors())
 
 app.use(express.json())
 
+app.get("/",(req,res)=>{
+    res.send("Heartbeat")
+})
+
 app.use('/user',userRouter)
 
 

@@ -1,17 +1,27 @@
+"use client";
 
-import JWT from "../../../Components/JWT"
+import { useSelector } from "react-redux";
+import JWT from "../../../Components/JWT";
+import { RootState } from "../../../redux/store";
 
-const page= async ({params}:{
-    params:{
-        roomId:number
-    }
-})=>{
+import { useParams } from "next/navigation";
+import ToolBar from "../../../Components/ToolBar";
 
-    const roomId=Number((await params).roomId)
-    
-    return <JWT roomId={roomId}></JWT>
+const page = ({}) => {
+  const params = useParams();
 
-    
-}
+  const roomId = Number(params?.roomId);
 
-export default page
+  const selectedTool = useSelector<RootState, any>(
+    (state) => state.selectedTool,
+  );
+
+  return (
+    <div className="bg-white">
+      <ToolBar selectedTool={selectedTool} />
+      <JWT roomId={roomId}></JWT>
+    </div>
+  );
+};
+
+export default page;
