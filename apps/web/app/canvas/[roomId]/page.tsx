@@ -1,14 +1,18 @@
 "use client";
 
 import { useSelector } from "react-redux";
-import JWT from "../../../Components/JWT";
+
 import { RootState } from "../../../redux/store";
 
 import { useParams } from "next/navigation";
 import ToolBar from "../../../Components/ToolBar";
+import useJwt from "../../../Hooks/useJwt";
+import RoomCanvas from "../../../Components/RoomCanvas";
 
-const page = ({}) => {
+const Page = ({}) => {
   const params = useParams();
+
+  const jwt = useJwt();
 
   const roomId = Number(params?.roomId);
 
@@ -18,10 +22,12 @@ const page = ({}) => {
 
   return (
     <div className="bg-white">
-      <ToolBar selectedTool={selectedTool} />
-      <JWT roomId={roomId}></JWT>
+      <div className="w-full flex justify-center  ">
+        <ToolBar selectedTool={selectedTool} />
+      </div>
+      <RoomCanvas roomId={roomId} jwtToken={jwt!} />
     </div>
   );
 };
 
-export default page;
+export default Page;

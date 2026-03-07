@@ -7,6 +7,7 @@ import {
   Eraser,
   Pencil,
   RectangleHorizontalIcon,
+  Download,
 } from "lucide-react";
 
 type Shape = "circle" | "rectangle" | "pencil" | "eraser" | "select";
@@ -14,8 +15,23 @@ type Shape = "circle" | "rectangle" | "pencil" | "eraser" | "select";
 const ToolBar = ({ selectedTool }: { selectedTool: Shape }) => {
   const dispatch = useDispatch();
 
+  const downloadCanvas = () => {
+    const canvas = document.querySelector("canvas") as HTMLCanvasElement;
+    if (!canvas) {
+      alert("Canvas not found");
+      return;
+    }
+
+    const link = document.createElement("a");
+    link.href = canvas.toDataURL("image/png");
+    link.download = `DrawIt-${new Date().toISOString().slice(0, 10)}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
-    <div className="border text-white rounded-md p-2 fixed top-10 left-10 flex z-50">
+    <div className="ring-1 ring-[#444444] bg-[#161616]  rounded-md p-2 m-2 my-4 absolute flex justify-center z-50">
       <IconButton
         icon={<Pencil />}
         onClick={() => {
@@ -54,6 +70,15 @@ const ToolBar = ({ selectedTool }: { selectedTool: Shape }) => {
         onClick={() => {
           dispatch(setSelectedTool("select"));
         }}
+      ></IconButton>
+
+      <div className="border-l border-gray-600 mx-1"></div>
+
+      <IconButton
+        icon={<Download />}
+        activated={false}
+        onClick={downloadCanvas}
+        title="Download canvas as image"
       ></IconButton>
     </div>
   );

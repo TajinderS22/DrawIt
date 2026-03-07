@@ -1,62 +1,41 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
-  provider = "prisma-client-js"
-  output   = "../generated/prisma"
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
-
-model Users{
-  id          String       @id @default(uuid())
-  username    String?   @unique
-  firstname   String    
-  lastname    String
-  email       String      @unique
-  password    String
-  phtotUrl    String?
-
-  rooms       Room[]      @relation("UserRooms")
-  
-  chatMessages  Chat[]
-
-  adminRooms   Room[]   @relation("AdminRelation") 
-
-
-  createdAt   DateTime  @default(now())   
-
+model Chat {
+  id      Int    @id @default(autoincrement())
+  message String
+  userId  String
+  roomId  Int
+  Room    Room   @relation(fields: [roomId], references: [id])
+  Users   Users  @relation(fields: [userId], references: [id])
 }
-
 
 model Room {
-  id          Int      @id @default(autoincrement())
-  slug        String   @unique
-  createdAt   DateTime @default(now())
-  adminId     String
-
-  admin       Users    @relation("AdminRelation",fields: [adminId], references: [id])
-  users       Users[]  @relation("UserRooms")
-
-  chats       Chat[]
+  id                        Int      @id @default(autoincrement())
+  slug                      String   @unique
+  createdAt                 DateTime @default(now())
+  adminId                   String
+  Chat                      Chat[]
+  Users_Room_adminIdToUsers Users    @relation("Room_adminIdToUsers", fields: [adminId], references: [id])
+  Users_UserRooms           Users[]  @relation("UserRooms")
 }
 
-
-model Chat{
-  id          Int       @id @default(autoincrement())
-  message     String    
-  userId      String
-  roomId      Int
-
-  room        Room      @relation(fields: [roomId],references: [id])
-  user        Users     @relation(fields: [userId],references: [id])
-
+model Users {
+  id                       String   @id
+  username                 String?  @unique
+  firstname                String
+  lastname                 String
+  email                    String   @unique
+  password                 String
+  createdAt                DateTime @default(now())
+  phtotUrl                 String?
+  Chat                     Chat[]
+  Room_Room_adminIdToUsers Room[]   @relation("Room_adminIdToUsers")
+  Room_UserRooms           Room[]   @relation("UserRooms")
 }
-

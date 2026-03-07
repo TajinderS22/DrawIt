@@ -1,5 +1,4 @@
 import jwt from "jsonwebtoken";
-import { prisma } from "@repo/db/dist/index.js";
 import { NextFunction, Request, Response } from "express";
 import { JWT_USER_PASSWORD } from "@repo/backend-common";
 
@@ -12,7 +11,7 @@ export const userMiddleware = async (
   res: Response,
   next: NextFunction
 ) => {
-  const id = req?.headers?.authorization;
+  const id = req.headers.authorization;
   if (!id) {
     res.status(401).json({
       message: "Invalid session",

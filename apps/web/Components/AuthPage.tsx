@@ -2,17 +2,32 @@
 import { Button } from "@repo/ui/button";
 import Input from "@repo/ui/Input";
 import axios from "axios";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BACKEND_URL } from "../app/config";
 import Alert from "@repo/ui/Alert";
 import { useRouter } from "next/navigation";
 import { set } from "react-hook-form";
 import Signin from "../app/signin/page";
+import Navbar from "./Navbar";
+import { useDispatch } from "react-redux";
+import { setUser } from "../redux/UserSlice";
+import useActiveSession from "../Hooks/useActiveSession";
 
 const AuthPage = ({ isSignin }: { isSignin: boolean }) => {
   const router = useRouter();
   const [AlertMessage, setAlertMessage] = useState("");
   const [AlertType, setAlertType] = useState("");
+  const dispatch=useDispatch()
+
+  const user=useActiveSession()
+
+  console.log(user)
+
+  useEffect(()=>{
+    if(user){
+      router.push("/dashboard")
+    }
+  },[user])
 
   const signinUser = async () => {
     const data = {
@@ -21,10 +36,12 @@ const AuthPage = ({ isSignin }: { isSignin: boolean }) => {
     };
     try {
       const response = await axios.post(BACKEND_URL + `/user/signin`, data);
+      
       if (response.status === 200) {
         localStorage.setItem("jwt", response.data.jwt);
         setAlertMessage("Signed in successfully!");
         setAlertType("success");
+        dispatch(setUser(response.data.user))
         setTimeout(() => {
           router.push("/dashboard");
         }, 1500);
@@ -73,15 +90,21 @@ const AuthPage = ({ isSignin }: { isSignin: boolean }) => {
   const passwordRef = useRef<HTMLInputElement>(null);
 
   return (
-    <div className="h-[98svh] p-2">
+    <div className="h-svh">
       <Alert type={AlertType} message={AlertMessage}></Alert>
+      <div className="w-full absolute">
+        <Navbar />
+      </div>
       <div
         className="w-screen h-full
                 flex justify-center items-center
                 bg-black
             "
       >
-        <div className="flex flex-col p-2 border border-gray-700 rounded-md">
+        <div
+          className="flex flex-col w-80  p-2 ring-slate-600  
+        shadow-slate-400/50 shadow-md ring-2 rounded-md"
+        >
           <div className="text-gray-100 text-xl p-2   ">
             {isSignin ? "Signin" : "Signup"}
           </div>
@@ -125,9 +148,12 @@ const AuthPage = ({ isSignin }: { isSignin: boolean }) => {
             <div></div>
             <Button type={"primary"}> {isSignin ? "Signin" : "Signup"} </Button>
           </div>
-
-          <div className="text-gray-50 flex">
-            {isSignin ? "New to DrawIt" : "Already a user"}
+          <div className="border-t border-white my-4"></div>
+          <div
+            className="text-gray-50  py-2 pl-2
+          hover:bg-sky-300/10 rounded-lg  flex"
+          >
+            {isSignin ? "New to DrawIt ?" : "Already a user ?"}
             <div
               className="mx-2 text-amber-100"
               onClick={() => {

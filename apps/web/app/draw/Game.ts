@@ -284,7 +284,6 @@ export class Game {
   }
 
   selectShape(x: number, y: number) {
-    console.log(this.existingShapes);
     for (let i = this.existingShapes.length - 1; i >= 0; i--) {
       const shape = this.existingShapes[i];
       if (!shape) continue;
@@ -426,7 +425,6 @@ export class Game {
 
     if (this.selectdTool === "select") {
       this.selectShape(x, y);
-      console.log(this.selectedShape);
 
       this.reRenderCanvas();
       return;

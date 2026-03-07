@@ -7,7 +7,7 @@ const Alert = ({type,message}:{
 
   if(type=='success'){
     return (
-    <div className='w-screen bg-black flex justify-center fixed '>
+    <div className='w-screen z-50  flex justify-center fixed top-0 '>
       <div className={`p-2 m-2 max-w-[700px] rounded-md bg-green-200`}>
         {message}
       </div>
@@ -15,7 +15,7 @@ const Alert = ({type,message}:{
   )}
   if(type=='failure'){
     return (
-    <div className='w-screen flex bg-black justify-center fixed '>
+    <div className='w-screen z-50 flex  justify-center fixed top-0'>
       <div className={`p-2 m-2 max-w-[700px] rounded-md bg-red-200`}>
         {message}
       </div>

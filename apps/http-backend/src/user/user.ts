@@ -1,5 +1,4 @@
 import { Request, Response, Router } from "express";
-import { prisma } from "@repo/db/dist/index.js";
 import bcrypt from "bcrypt";
 import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
@@ -9,8 +8,11 @@ import {
   UserSchemaZod,
 } from "@repo/backend-common";
 import { userMiddleware, AuthedRequest } from "../middleware/user";
+import { getPrisma } from "@repo/db";
 
 dotenv.config();
+
+const db = getPrisma();
 
 export const userRouter: Router = Router();
 
@@ -27,7 +29,7 @@ type UserType = {
 
 userRouter.post("/signup", async (req, res) => {
   const data = req.body;
-  const existingUser = await prisma.users.findFirst({
+  const existingUser = await db.users.findFirst({
     where: {
       email: data.email,
       username: data.username,
@@ -51,7 +53,7 @@ userRouter.post("/signup", async (req, res) => {
         .status(400)
         .json({ message: "Invalid inputs", errors: parsed.error });
     }
-    const createUser = await prisma.users.create({
+    const createUser = await db.users.create({
       data,
     });
     if (createUser) {
@@ -69,8 +71,9 @@ userRouter.post("/signup", async (req, res) => {
 
 userRouter.post("/signin", async (req, res) => {
   const data = req.body;
+
   try {
-    const user = await prisma.users.findFirst({
+    const user = await db.users.findFirst({
       where: {
         email: data.email,
       },
@@ -83,7 +86,7 @@ userRouter.post("/signin", async (req, res) => {
     }
     const passwordCheck: Boolean = await bcrypt.compare(
       data.password,
-      user.password
+      user.password,
     );
     if (!passwordCheck) {
       res.status(401).json({
@@ -100,6 +103,14 @@ userRouter.post("/signin", async (req, res) => {
     const token = jwt.sign({ id: user.id }, JWT_USER_PASSWORD);
     res.status(200).json({
       message: "User Logged in succussfully.",
+      user:{
+        id:user.id,
+        username:user.username,
+        firstname:user.firstname,
+        lastname: user.lastname,
+        email: user.email,
+        createdAt:user.createdAt,
+      },
       jwt: token,
     });
   } catch (error) {
@@ -114,16 +125,16 @@ userRouter.post("/signin", async (req, res) => {
 userRouter.get("/rooms", userMiddleware, async (req: AuthedRequest, res) => {
   const userId = req.userId;
   try {
-    const rooms = await prisma.users.findFirst({
+    const userWithRooms = await db.users.findFirst({
       where: {
         id: userId,
       },
       select: {
-        rooms: true,
+        Room_UserRooms: true,
       },
     });
     res.status(200).json({
-      rooms: rooms,
+      rooms: userWithRooms?.Room_UserRooms ?? [],
     });
   } catch (err) {
     console.error(err);
@@ -131,12 +142,53 @@ userRouter.get("/rooms", userMiddleware, async (req: AuthedRequest, res) => {
 });
 
 userRouter.post(
+  "/canvas/delete",
+  userMiddleware,
+  async (req: AuthedRequest, res) => {
+    const userId = req.userId;
+    const id = req.body.id;
+
+    console.log(id)
+    try {
+      const room = await db.room.findFirst({
+        where: {
+          id: id,
+        },
+      });
+
+      if(room?.adminId!=userId){
+        return res.status(200).json({
+          authorized:false,
+          message:"You are not the admin of this room "
+        })
+      }
+
+      const deleted=await db.room.delete({
+        where:{
+          id:id,
+          adminId:userId
+        }
+      })
+      
+      
+      console.log(deleted)
+      res.status(200).json({
+        authorized:true,
+        deleted,
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  },
+);
+
+userRouter.post(
   "/room/join",
   userMiddleware,
   async (req: AuthedRequest, res) => {
     const userId = req.userId;
     const roomId = req.body.roomId;
-    const room = await prisma.room.findFirst({
+    const room = await db.room.findFirst({
       where: {
         id: roomId,
       },
@@ -148,10 +200,10 @@ userRouter.post(
       return;
     }
 
-    const result = await prisma.room.update({
+    const result = await db.room.update({
       where: { id: roomId },
       data: {
-        users: {
+        Users_UserRooms: {
           connect: { id: userId },
         },
       },
@@ -159,7 +211,7 @@ userRouter.post(
     res.status(200).json({
       message: result,
     });
-  }
+  },
 );
 
 userRouter.post(
@@ -175,7 +227,7 @@ userRouter.post(
       return;
     }
     try {
-      const room = await prisma.room.create({
+      const room = await db.room.create({
         data: {
           slug: data.data.slug,
           adminId: userId,
@@ -190,13 +242,13 @@ userRouter.post(
         message: "Name already exist please choose some other name.",
       });
     }
-  }
+  },
 );
 
 userRouter.get("/chats/:roomId", async (req, res) => {
   const roomId = Number(req.params.roomId);
   try {
-    const messages = await prisma.chat.findMany({
+    const messages = await db.chat.findMany({
       where: {
         roomId,
       },
@@ -217,31 +269,68 @@ userRouter.get("/chats/:roomId", async (req, res) => {
   }
 });
 
-const checkUser = async (token: any) => {
-  const decoded = jwt.verify(token, JWT_USER_PASSWORD);
-
-  if (decoded) {
-    return decoded;
-  } else {
-    return null;
+const checkUser = async (userId: any, roomId: any) => {
+  const userInRoom = await db.users.findFirst({
+    where: {
+      id: userId,
+    },
+    select: {
+      Room_UserRooms: {
+        where: {
+          id: roomId,
+        },
+      },
+    },
+  });
+  if (userInRoom?.Room_UserRooms.length! <= 0) {
+    return false;
   }
+  return true;
 };
 
-userRouter.post("/verify", async (req, res) => {
-  const token = req.body.data.jwt;
-  try {
-    const user = await checkUser(token);
+userRouter.post("/verify", userMiddleware, async (req: AuthedRequest, res) => {
+  const userId = req.userId;
+  const user = await db.users.findFirst({
+    where: {
+      id: userId,
+    },
+  });
+
+  if (user) {
     res.status(200).json({
       user: user,
     });
-  } catch (err) {
-    console.error(err);
   }
 });
 
+userRouter.post(
+  "/verify/canvas",
+  userMiddleware,
+  async (req: AuthedRequest, res) => {
+    const userId = req.userId;
+    const roomId = req.body.data.roomId;
+    try {
+      const user = await checkUser(userId, roomId);
+      if (user) {
+        res.status(200).json({
+          authorised: true,
+          message: "You are authorized to use this canvas",
+        });
+      } else {
+        res.status(200).json({
+          authorised: false,
+          message: "User don't belong to this canvas",
+        });
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  },
+);
+
 userRouter.get("/canvas/:slug", async (req, res) => {
   const slug = req.params.slug;
-  const roomId = await prisma.room.findFirst({
+  const roomId = await db.room.findFirst({
     where: {
       slug: slug,
     },
