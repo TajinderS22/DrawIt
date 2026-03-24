@@ -60,7 +60,6 @@ const CanvasDisplayCard = ({
       },
     );
 
-    console.log(res);
     if (res.data.authorized) {
       setLoading(false);
       removeCardFromAllCanvases(res.data.deleted.id);

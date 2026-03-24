@@ -148,7 +148,6 @@ userRouter.post(
     const userId = req.userId;
     const id = req.body.id;
 
-    console.log(id)
     try {
       const room = await db.room.findFirst({
         where: {
@@ -171,7 +170,6 @@ userRouter.post(
       })
       
       
-      console.log(deleted)
       res.status(200).json({
         authorized:true,
         deleted,

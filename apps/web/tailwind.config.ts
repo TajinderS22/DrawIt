@@ -1,8 +1,7 @@
-// tailwind.config.js
 module.exports = {
   content: [
-    "./src/**/*.{js,ts,jsx,tsx}", // <-- adjust based on your repo
-    "../../packages/ui/**/*.{js,ts,jsx,tsx}" // <--- include your shared package
+    "./src/**/*.{js,ts,jsx,tsx}",
+    "../../packages/ui/**/*.{js,ts,jsx,tsx}",
   ],
   safelist: [
     "bg-white",
@@ -16,7 +15,7 @@ module.exports = {
     "max-w-[400px]",
     "bg-blue-100",
     "bg-red-200",
-    'bg-green-200',
+    "bg-green-200",
   ],
   theme: {
     extend: {},

@@ -1,0 +1,82 @@
+name: Deploy on Production
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout (for CI context only)
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
+        env:
+          HOST: ${{ secrets.PROD_HOST }}
+          USER: ${{ secrets.PROD_USER }}
+          KEY: ${{ secrets.PROD_SSH_KEY }}
+        run: |
+          echo "$KEY" > key.pem
+          chmod 600 key.pem
+
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+
+          cat >> ~/.ssh/config <<END
+          Host prod
+            HostName $HOST
+            User $USER
+            IdentityFile ./key.pem
+            StrictHostKeyChecking no
+          END
+
+      - name: Pull and Deploy on VM
+        run: |
+          ssh prod "
+            set -e
+
+            # Load nvm
+            export NVM_DIR=\"\$HOME/.nvm\"
+            [ -s \"\$NVM_DIR/nvm.sh\" ] && . \"\$NVM_DIR/nvm.sh\"
+            nvm install 22 
+            nvm use 22
+
+
+            npm install -g pm2
+
+
+
+            echo '--- Node version ---'
+            node -v
+            npm -v
+            pm2 -v
+
+            echo '--- Switching to project directory ---'
+            cd /home/ubuntu/DrawIt
+
+            echo '--- Resetting local changes ---'
+            git reset --hard
+
+            echo '--- Pulling latest code ---'
+            git pull origin main
+
+            echo '--- Installing dependencies ---'
+            npm install
+
+            echo '--- Generating Prisma client ---'
+            cd packages/db
+            npx prisma generate
+            npx tsc
+            cd ../../
+
+            echo '--- Building the app ---'
+            npm run build:force 
+
+            echo '--- Restarting app ---'
+            pm2 restart all
+
+            echo '✅ Deployment complete!'
+          "

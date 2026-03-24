@@ -12,7 +12,7 @@ model Chat {
   message String
   userId  String
   roomId  Int
-  Room    Room   @relation(fields: [roomId], references: [id])
+  Room    Room   @relation(fields: [roomId], references: [id], onDelete: Cascade)
   Users   Users  @relation(fields: [userId], references: [id])
 }
 

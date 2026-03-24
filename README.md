@@ -1,314 +1,198 @@
 # ✏️ DrawIt - Real-time Collaborative Whiteboard
 
-[![GitHub](https://img.shields.io/badge/GitHub-DrawIt-blue?logo=github)](https://github.com/TajinderS22/drawit)
-[![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
-
-DrawIt is a modern, open-source, real-time collaborative whiteboard tool built with Next.js and WebSockets. Design, sketch, and brainstorm ideas with your team directly in the browser — no installations required.
+DrawIt is a full-stack, real-time collaborative whiteboard application built with TypeScript, Next.js, Express, and WebSockets. Multiple users can join shared canvas rooms, draw together in real-time, and persist their work to a PostgreSQL database using Prisma ORM.
 
 ## ✨ Features
 
-- 🧑‍🤝‍🧑 **Real-time Collaboration** - Work with your team live with instant updates
-- 🎨 **Smart Drawing Tools** - Draw shapes, arrows, and text with precision
-- 💾 **Autosave** - All sketches are automatically saved and synced
-- 📦 **Open Source** - Free and extensible, self-host or contribute
-- ⚡ **Lightning Fast** - Optimized performance with smooth interactions
-- 🌐 **Lightweight** - No bloat, works in any modern browser
-- 📥 **Export Canvas** - Download your drawings as PNG images
+- 🧑‍🤝‍🧑 **Real-time Collaboration** - Work with multiple users simultaneously on shared canvases
+- 🎨 **Drawing Tools** - Multiple drawing tools and shape support for creative expression
+- 💾 **Persistent Storage** - All canvas data automatically saved to database
+- 🔐 **User Authentication** - JWT-based authentication with secure password hashing (bcrypt)
+- 📊 **Room-based Architecture** - Create and join rooms with unique slugs for organization
+- ⚡ **WebSocket Communication** - Native WebSocket implementation (not Socket.IO) for efficient real-time sync
+- 🎯 **Monorepo Structure** - Scalable turborepo setup with shared utilities and configurations
+
+## 📋 Prerequisites
+
+- **Node.js** 18+, **PNPM** 8+, **PostgreSQL** 12+
 
 ## 🚀 Getting Started
 
-### Prerequisites
-
-- Node.js 16+ and npm/pnpm/yarn
-- A modern web browser (Chrome, Firefox, Safari, Edge)
-
-### Installation
-
-1. Clone the repository:
+### 1. Clone and Install
 
 ```bash
-git clone https://github.com/TajinderS22/drawit.git
+git clone <repository-url>
 cd DrawIt
-```
-
-2. Install dependencies:
-
-```bash
 pnpm install
 ```
 
-3. Set up environment variables:
+PNPM will automatically install dependencies for all workspaces and link internal packages.
+
+### 2. Environment Configuration
+
+Create `.env` files in the following locations:
+
+**`packages/db/.env`** - Database connection:
+
+```env
+DATABASE_URL="postgresql://username:password@localhost:5432/drawit_db"
+```
+
+**`apps/http-backend/.env`** - REST API configuration:
+
+```env
+HTTP_SEVER_PORT=3030
+JWT_SECRET=your_jwt_secret_key_here
+DATABASE_URL="postgresql://username:password@localhost:5432/drawit_db"
+```
+
+**`apps/ws-backend/.env`** - WebSocket server configuration:
+
+```env
+WS_PORT=8090
+JWT_SECRET=your_jwt_secret_key_here
+DATABASE_URL="postgresql://username:password@localhost:5432/drawit_db"
+```
+
+**`apps/web/.env.local`** - Frontend configuration:
+
+```env
+NEXT_PUBLIC_BACKEND_URL=http://localhost:3030
+NEXT_PUBLIC_WS_URL=ws://localhost:8090
+```
+
+### 3. Database Setup
+
+Initialize the PostgreSQL database and run migrations:
 
 ```bash
-cp .env.example .env.local
+# Create the database
+createdb drawit_db
+
+# Navigate to the db package
+cd packages/db
+
+# Run Prisma migrations
+pnpm run db:migrate
+
+# Seed the database (optional - if seed script exists)
+pnpm run db:seed
 ```
 
-4. Run the development server:
+### 4. Start Development Servers
+
+Run all services concurrently using Turborepo:
 
 ```bash
-pnpm run dev
-```
-
-Visit `http://localhost:3000` in your browser.
-
-## 📁 Project Structure
-
-This is a monorepo using [Turborepo](https://turborepo.com/) with the following structure:
-
-```
-DrawIt/
-├── apps/
-│   ├── http-backend/        # REST API Server
-│   ├── web/                 # Next.js Frontend
-│   └── ws-backend/          # WebSocket Server for real-time sync
-├── packages/
-│   ├── db/                  # Prisma database configuration
-│   ├── backend-common/      # Shared backend utilities
-│   ├── ui/                  # Shared React UI components
-│   ├── eslint-config/       # Shared ESLint configuration
-│   └── typescript-config/   # Shared TypeScript configuration
-└── turbo.json              # Turborepo configuration
-```
-
-### Apps and Packages
-
-- **`web`** - Next.js frontend application with canvas drawing interface
-- **`http-backend`** - Express.js REST API for authentication and data management
-- **`ws-backend`** - WebSocket server for real-time collaboration features
-- **`db`** - Prisma schema and database migrations
-- **`@repo/ui`** - Reusable React components (Button, Input, Alert, Card, etc.)
-- **`@repo/backend-common`** - Shared utilities and middleware for backends
-- **`@repo/eslint-config`** - ESLint configurations for different project types
-- **`@repo/typescript-config`** - TypeScript configurations for different project types
-
-## 🛠️ Tech Stack
-
-### Frontend
-
-- [Next.js](https://nextjs.org/) - React framework with App Router
-- [React](https://react.dev/) - UI library
-- [Redux](https://redux.js.org/) - State management
-- [TailwindCSS](https://tailwindcss.com/) - Utility-first CSS
-- [Socket.io](https://socket.io/) - Real-time communication
-
-### Backend
-
-- [Node.js](https://nodejs.org/) - JavaScript runtime
-- [Express.js](https://expressjs.com/) - Web framework
-- [Prisma](https://www.prisma.io/) - ORM for database
-- [WebSocket](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket) - Real-time sync
-
-### DevOps & Tools
-
-- [TypeScript](https://www.typescriptlang.org/) - Static type checking
-- [ESLint](https://eslint.org/) - Code linting
-- [Prettier](https://prettier.io/) - Code formatting
-- [Turborepo](https://turborepo.com/) - Monorepo build system
-
-## 🔧 Development
-
-### Build
-
-To build all apps and packages, run the following command:
-
-```
-cd my-turborepo
-
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build
-yarn dlx turbo build
-pnpm exec turbo build
-```
-
-You can build a specific package by using a [filter](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters):
-
-```
-# With [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation) installed (recommended)
-turbo build --filter=docs
-
-# Without [global `turbo`](https://turborepo.com/docs/getting-started/installation#global-installation), use your package manager
-npx turbo build --filter=docs
-yarn exec turbo build --filter=docs
-pnpm exec turbo build --filter=docs
-```
-
-### Develop
-
-### Develop
-
-To start development on all services:
-
-```bash
+# From the root directory, start all dev servers
 pnpm run dev
 ```
 
 This will start:
 
-- Next.js frontend on `http://localhost:3000`
-- HTTP backend on `http://localhost:5000`
-- WebSocket server on `http://localhost:5001`
+- **Frontend** (Next.js) - `http://localhost:3000`
+- **HTTP Backend** (Express) - `http://localhost:3030`
+- **WebSocket Server** - `ws://localhost:8090`
 
-To develop a specific app:
-
-```bash
-# Frontend only
-turbo dev --filter=web
-
-# Backend API only
-turbo dev --filter=http-backend
-
-# WebSocket server only
-turbo dev --filter=ws-backend
-```
-
-## 🎨 How to Use
-
-### Drawing Tools
-
-1. **Pencil** - Free-hand drawing
-2. **Rectangle** - Draw rectangular shapes
-3. **Circle** - Draw circular shapes
-4. **Eraser** - Erase drawn content
-5. **Select** - Select and move objects
-6. **Download** - Export canvas as PNG image
-
-### Collaboration
-
-1. Create or join a room through the dashboard
-2. Share the room link with your team
-3. Start drawing in real-time
-4. All changes are instantly synced across connected users
-
-## 📚 API Documentation
-
-### HTTP Backend (`/apps/http-backend`)
-
-- **Authentication** - User signin/signup endpoints
-- **Room Management** - Create and list drawing rooms
-- **User Verification** - JWT token validation
-
-### WebSocket Backend (`/apps/ws-backend`)
-
-- **Real-time Drawing** - Synchronize canvas strokes
-- **Room Events** - User join/leave events
-- **Message Broadcasting** - Distribute drawing updates to all clients
-
-## 🤝 Contributing
-
-We welcome contributions! Here's how to get started:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-Please ensure:
-
-- Code follows the existing style (ESLint + Prettier)
-- All tests pass
-- Changes are well-documented
-
-## 📋 Available Scripts
-
-### Root Level (Turborepo)
+Alternatively, start individual services:
 
 ```bash
-pnpm run dev        # Start all services in development mode
-pnpm run build      # Build all apps and packages
-pnpm run lint       # Run ESLint on all packages
-pnpm run test       # Run tests across the monorepo
+# Start only the frontend
+pnpm --filter web dev
+
+# Start only the HTTP backend
+pnpm --filter http-backend dev
+
+# Start only the WebSocket backend
+pnpm --filter ws-backend dev
+
+# Start database package (for Prisma commands)
+pnpm --filter db run db:migrate
 ```
 
-### Frontend (`apps/web`)
+Visit `http://localhost:3000` in your browser and authenticate to start collaborating.
+
+## 📁 Project Architecture
+
+**Monorepo Structure:** Turborepo managing 3 apps and 5 packages.
+
+```
+DrawIt/
+├── apps/
+│   ├── http-backend/          # Express REST API (port 3030)
+│   ├── web/                   # Next.js frontend (port 3000)
+│   └── ws-backend/            # WebSocket server (port 8090)
+├── packages/
+│   ├── db/                    # Prisma + PostgreSQL
+│   ├── backend-common/        # Shared utilities
+│   ├── ui/                    # React components
+│   ├── eslint-config/         # Linting rules
+│   └── typescript-config/     # TS configs
+└── turbo.json
+```
+
+## 🛠️ Tech Stack
+
+**Frontend:** Next.js 15, React 19, TypeScript, Redux, TailwindCSS, Axios, JWT
+
+**Backend:** Node.js, Express 5, WebSocket (ws), Prisma, PostgreSQL, bcrypt
+
+**Build:** Turborepo, PNPM, ESLint
+
+## 🏃 Development Workflow
+
+**Start all services:**
 
 ```bash
-cd apps/web
-pnpm run dev        # Start Next.js dev server
-pnpm run build      # Build for production
-pnpm run lint       # Run ESLint
-pnpm run start      # Start production server
+pnpm run dev
 ```
 
-### HTTP Backend (`apps/http-backend`)
+**Services running:**
+
+- Frontend: `http://localhost:3000`
+- HTTP Backend: `http://localhost:3030`
+- WebSocket: `ws://localhost:8090`
+
+**Individual services:**
 
 ```bash
-cd apps/http-backend
-pnpm run dev        # Start development server with hot reload
-pnpm run build      # Build TypeScript
-pnpm run start      # Start production server
+pnpm --filter web dev
+pnpm --filter http-backend dev
+pnpm --filter ws-backend dev
 ```
 
-### WebSocket Backend (`apps/ws-backend`)
-
-```bash
-cd apps/ws-backend
-pnpm run dev        # Start WebSocket server
-pnpm run build      # Build TypeScript
-pnpm run start      # Start production server
-```
-
-## 🗄️ Database
-
-DrawIt uses [Prisma](https://www.prisma.io/) for database management.
-
-### Setup Database
+**Database operations:**
 
 ```bash
 cd packages/db
-pnpm prisma migrate dev --name init    # Run migrations
-pnpm prisma studio                     # Open Prisma Studio UI
+pnpm run db:migrate -- --name migration_name
+pnpm run db:studio
 ```
 
-### Schema
+**Code quality:**
 
-The database schema is defined in `packages/db/prisma/schema.prisma`. Key models:
+```bash
+pnpm run lint              # Lint all packages
+pnpm run type-check        # Type check
+pnpm run build             # Build all
+pnpm --filter web build    # Build specific package
+```
 
-- **User** - User accounts and authentication
-- **Room** - Drawing rooms/canvases
-- **Canvas** - Canvas content and metadata
+## 🔐 Authentication
 
-## 🐛 Troubleshooting
+1. Register/Login → Hash password (bcrypt) → Generate JWT
+2. API requests include JWT in Authorization header
+3. Middleware verifies JWT signature → Extract user ID
+4. WebSocket connection passes JWT as query param → Verified on connection
 
-### WebSocket Connection Issues
+## 📡 Real-time Sync
 
-- Ensure the WebSocket server is running (`ws-backend`)
-- Check if the port (5001) is not blocked by firewall
-- Verify the browser console for connection errors
+WebSocket server maintains rooms and broadcasts drawing events:
 
-### Build Failures
+```
+Client A draws → sends event to ws-backend → broadcasts to all clients in room
+```
 
-- Clear node_modules: `rm -rf node_modules && pnpm install`
-- Clear Turborepo cache: `turbo prune --scope=web`
+## 📝 License
 
-### Database Issues
-
-- Reset database: `prisma db push --skip-generate`
-- Check `.env.local` has correct `DATABASE_URL`
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- Built with [Next.js](https://nextjs.org/)
-- Real-time sync powered by [WebSockets](https://socket.io/)
-- State management with [Redux](https://redux.js.org/)
-- Database ORM by [Prisma](https://www.prisma.io/)
-- Monorepo tooling with [Turborepo](https://turborepo.com/)
-
-## 📞 Support
-
-For questions or issues:
-
-- Open a [GitHub Issue](https://github.com/TajinderS22/drawit/issues)
-- Check existing documentation
-- Join discussions in the repository
-
----
-
-Made with ❤️ by the DrawIt Team
+MIT

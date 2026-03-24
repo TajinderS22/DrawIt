@@ -21,7 +21,6 @@ const AuthPage = ({ isSignin }: { isSignin: boolean }) => {
 
   const user=useActiveSession()
 
-  console.log(user)
 
   useEffect(()=>{
     if(user){

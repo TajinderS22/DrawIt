@@ -1,6 +1,5 @@
 "use client";
 
-// import { useRouter } from "next/router"
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
@@ -18,10 +17,8 @@ import Alert from "@repo/ui/Alert";
 const Page = () => {
   const router = useRouter();
 
-  const jwt =  useJwt()
-  const user=useActiveSession()
-
-  
+  const jwt = useJwt();
+  const user = useActiveSession();
 
   const joinRoomRef = useRef<HTMLInputElement>(null);
   const createRoomRef = useRef<HTMLInputElement>(null);
@@ -37,20 +34,19 @@ const Page = () => {
         authorization: jwt,
       },
     });
-    if(rooms.status==200){
+    if (rooms.status == 200) {
       setAllRooms(rooms.data.rooms);
       setLoading(false);
     }
   };
 
-  const [refreshRooms,setRefreshRooms]= useState(true)
+  const [refreshRooms, setRefreshRooms] = useState(true);
 
   useEffect(() => {
-    if(jwt&&user){
+    if (jwt && user) {
       getUserRooms();
     }
-    
-  }, [jwt,user,refreshRooms]);
+  }, [jwt, user, refreshRooms]);
 
   const removeCardFromAllCanvases = (deletedId: string) => {
     setAllRooms((prev: any[]) => prev.filter((x) => x.id !== deletedId));
@@ -68,7 +64,7 @@ const Page = () => {
         },
       },
     );
-      await axios.post(
+    await axios.post(
       BACKEND_URL + "/user/room/join",
       {
         roomId: response.data.roomId,
@@ -79,13 +75,13 @@ const Page = () => {
         },
       },
     );
-    setCreateRoom(false)
-    setRefreshRooms(!refreshRooms)
+    setCreateRoom(false);
+    setRefreshRooms(!refreshRooms);
   };
 
   const handleJoinRoomClick = async () => {
     const roomid = await axios.get(
-      BACKEND_URL + "/user/canvas/" + joinRoomRef?.current?.value
+      BACKEND_URL + "/user/canvas/" + joinRoomRef?.current?.value,
     );
     await axios.post(
       BACKEND_URL + "/user/room/join",
@@ -102,21 +98,12 @@ const Page = () => {
     setRefreshRooms(!refreshRooms);
   };
 
-  const [alertType, setAlertType] = useState('');
-  const [alertMessage, setAlertMessage] = useState('');
+  const [alertType, setAlertType] = useState("");
+  const [alertMessage, setAlertMessage] = useState("");
 
-
-  if(loading){
-
-    return (
-      <Loading/>
-    );
+  if (loading) {
+    return <Loading />;
   }
-
-
-
-
-
 
   return (
     <div className="p-2 max-w-[1920px] mx-auto ">
@@ -203,8 +190,6 @@ const Page = () => {
         </div>
       )}
       <div></div>
-
-      {/* Actual data */}
 
       <div
         className={`text-xl p-2 my-2 mb-6 w-11/12 mx-auto

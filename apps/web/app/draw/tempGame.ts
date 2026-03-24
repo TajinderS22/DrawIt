@@ -1,4 +1,3 @@
-/* eslint-disable prefer-const */
 import { getExistingShapes } from "./ApiCalls";
 
 type Tools = "rectangle" | "circle" | "pencil" | "eraser" | "select";
@@ -21,7 +20,6 @@ export class Game {
   private selectedShape: any | null = null;
   private allShapesFromServer: any;
 
-  // 🌍 World transform
   private offsetX = 0;
   private offsetY = 0;
   private scale = 1;
@@ -46,7 +44,6 @@ export class Game {
   }
 
   async init() {
-    // 🎯 Center origin on load
     this.offsetX = this.canvas.width / 2;
     this.offsetY = this.canvas.height / 2;
 
@@ -83,7 +80,6 @@ export class Game {
     };
   }
 
-  // ================= COORDINATE HELPERS =================
   private screenToWorld(screenX: number, screenY: number) {
     return {
       x: (screenX - this.offsetX) / this.scale,
@@ -91,7 +87,6 @@ export class Game {
     };
   }
 
-  // ================= AXES =================
   drawAxes() {
     const ctx = this.ctx;
     ctx.save();
@@ -111,7 +106,6 @@ export class Game {
     ctx.restore();
   }
 
-  // ================= RENDER =================
   reRenderCanvas() {
     this.ctx.setTransform(1, 0, 0, 1, 0, 0);
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -159,7 +153,6 @@ export class Game {
     this.ctx.restore();
   }
 
-  // ================= MOUSE =================
   mouseDownHandler = (e: MouseEvent) => {
     this.clicked = true;
     const { x, y } = this.screenToWorld(e.offsetX, e.offsetY);
@@ -244,7 +237,6 @@ export class Game {
     this.reRenderCanvas();
   };
 
-  // ================= PAN & ZOOM =================
   pan(dx: number, dy: number) {
     this.offsetX += dx;
     this.offsetY += dy;

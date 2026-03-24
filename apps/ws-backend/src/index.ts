@@ -3,8 +3,14 @@ import jwt, { JwtPayload } from "jsonwebtoken";
 import { JWT_USER_PASSWORD } from "@repo/backend-common";
 import { getPrisma } from "@repo/db";
 
+import dotenv from "dotenv"
+
+dotenv.config()
+
+
+
 const wss = new WebSocketServer({
-  port: 8080,
+  port: 8090
 });
 
 const db = getPrisma();
@@ -119,7 +125,6 @@ wss.on("connection", (ws, request) => {
                   break;
                 }
               } catch (err) {
-                // ignore parse errors
               }
             }
           }
@@ -127,7 +132,6 @@ wss.on("connection", (ws, request) => {
           if (MessageToBeDeletedId != null) {
             await db.chat.delete({ where: { id: MessageToBeDeletedId } });
           } else {
-            // Nothing found to delete; continue without throwing so clients stay in sync
             console.warn(
               "chat_delete_shape: no matching chat found for delete request",
               data,
@@ -159,8 +163,7 @@ wss.on("connection", (ws, request) => {
             roomId,
             userId,
           };
-          // Persist chat and include created record in broadcast so clients
-          // can obtain the DB id immediately.
+        
           const created = await db.chat.create({
             data: messageData,
           });

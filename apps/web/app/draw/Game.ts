@@ -21,7 +21,6 @@ export class Game {
   private selectedShape: any | null = null;
   private allShapesFromServer: any;
   private deletingShapes: Array<{ shape: any }> = [];
-  // Indicates whether an external pan operation is in progress (set by container)
   public isPanning: boolean = false;
 
   private offsetX: number = 0;
@@ -92,13 +91,11 @@ export class Game {
     const spacing = 100;
     const radius = 1;
 
-    // Calculate the world bounds that are visible on screen
     const minX = -this.offsetX / this.scale;
     const minY = -this.offsetY / this.scale;
     const maxX = (this.canvas.width - this.offsetX) / this.scale;
     const maxY = (this.canvas.height - this.offsetY) / this.scale;
 
-    // Start from the nearest grid line
     const startX = Math.floor(minX / spacing) * spacing;
     const startY = Math.floor(minY / spacing) * spacing;
 
@@ -117,10 +114,6 @@ export class Game {
       if (message.type == "chat") {
         const parsedShape = JSON.parse(message.message);
         const shape = parsedShape.shape;
-        // Avoid duplicating shapes on the origin client: if this message
-        // comes from the same user who created it, we already added the
-        // shape locally. Still, capture the DB id (message.chat) so
-        // deletes can reference it immediately.
         if (shape) {
           if (message.userId !== this.userId) {
             this.existingShapes.push(shape);
@@ -195,7 +188,6 @@ export class Game {
     }
   }
 
-  // ===== Helpers for selection, deletion, and eraser =====
   isInsideRect(shape: any, x: number, y: number) {
     const minX = Math.min(shape.x, shape.x + shape.width);
     const maxX = Math.max(shape.x, shape.x + shape.width);
@@ -206,7 +198,6 @@ export class Game {
   }
 
   isInsideCircle(shape: any, x: number, y: number) {
-    // Handle cases where radius might be negative by using absolute value
     const radius = Math.abs(shape.radius);
     const dx = x - shape.centerX;
     const dy = y - shape.centerY;
@@ -237,10 +228,6 @@ export class Game {
   handleEraser(x: number, y: number) {
     const shapesToDelete: any[] = [];
 
-    // Find shapes that should be deleted but do not remove them locally
-    // until the server confirms deletion. This prevents desync where the
-    // origin client removes immediately but the server/other clients still
-    // have the shape.
     for (const shape of this.existingShapes) {
       if (!shape) continue;
 
@@ -261,8 +248,6 @@ export class Game {
     }
 
     shapesToDelete.forEach((shape) => {
-      // Try to find DB record (id) for this shape. If not found, send the
-      // shape payload and let the server match/delete by content.
       const deleteShape = this.allShapesFromServer
         ? this.allShapesFromServer.find((x: any) =>
             this.areShapesEqual(shape, x.shape),
@@ -348,17 +333,13 @@ export class Game {
     );
   }
 
-  // ===== Canvas render =====
-
   reRenderCanvas() {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     this.ctx.fillStyle = "rgba(24, 25, 26)";
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-    // Save context state
     this.ctx.save();
 
-    // Apply transformations
     this.ctx.translate(this.offsetX, this.offsetY);
     this.ctx.scale(this.scale, this.scale);
 
@@ -401,7 +382,6 @@ export class Game {
       }
     }
 
-    // Restore context state
     this.ctx.restore();
   }
 
@@ -518,10 +498,10 @@ export class Game {
     }
     shapeAlreadyOnCanvas = false;
     this.currentPencilPoints = [];
+
   };
 
   mouseMoveHandler = (e: any) => {
-    // Don't draw while panning
     if (this.isPanning) return;
     if (!this.clicked) return;
     this.reRenderCanvas();
@@ -530,7 +510,6 @@ export class Game {
     const width = x - this.startX;
     const height = y - this.startY;
 
-    // Apply transformations before drawing preview
     this.ctx.save();
     this.ctx.translate(this.offsetX, this.offsetY);
     this.ctx.scale(this.scale, this.scale);
@@ -574,10 +553,27 @@ export class Game {
     } else if (this.selectdTool === "pencil") {
       const mouseX = x;
       const mouseY = y;
-      this.renderPencil({ mouseX, mouseY });
-      this.currentPencilPoints.push({ x: mouseX, y: mouseY });
+
       this.lastX = x;
       this.lastY = y;
+
+      // this.renderPencil({ mouseX, mouseY });
+      this.currentPencilPoints.push({ x: mouseX, y: mouseY });
+      if (this.currentPencilPoints && this.currentPencilPoints.length > 1) {
+          for (let i = 1; i < this.currentPencilPoints.length; i++) {
+            if (this.currentPencilPoints[i] && this.currentPencilPoints[i - 1]) {
+              const curr = this.currentPencilPoints[i];
+              const prev = this.currentPencilPoints[i];
+              const mouseX = curr!.x;
+              const mouseY = curr!.y;
+              this.lastX = prev!.x;
+              this.lastY = prev!.y;
+              this.renderPencil({ mouseX, mouseY });
+            }
+          }
+        }
+
+      
     } else if (this.selectdTool === "eraser") {
       this.handleEraser(x, y);
     }

@@ -15,10 +15,9 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
         className="p-2 m-1 bg-blue-100 text-black rounded-md"
       />
     );
-  }
+  },
 );
 
-// Optional but recommended: give the component a display name for debugging
 Input.displayName = "Input";
 
 export default Input;

@@ -4,7 +4,7 @@ import {userRouter} from './user/user'
 import cors from 'cors'
 
 const app=express();
-const port =3030;
+const port =process.env.HTTP_SEVER_PORT||3030;
 
 app.use(cors())
 

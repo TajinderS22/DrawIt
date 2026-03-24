@@ -1,16 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import Navbar from "../Components/Navbar";
 
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-black text-white flex flex-col">
-
-      {/* Hero Section */}
       <section className="flex-1 flex flex-col items-center justify-center text-center px-6 py-20 pt-24">
         <h1 className="text-6xl font-bold mb-4 text-white tracking-tight">
-          ✏️ DrawIt
+          DrawIt
         </h1>
         <p className="text-gray-300 text-xl max-w-2xl mb-8">
           A real-time, collaborative, open-source whiteboard tool. Plan, design,
@@ -39,27 +36,24 @@ export default function LandingPage() {
           <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
             {[
               {
-                title: "🧑‍🤝‍🧑 Real-time Collaboration",
+                title: "Real-time Collaboration",
                 desc: "Work with your team live. Instant updates and no page refreshes.",
               },
               {
-                title: "📦 Open Source",
+                title: "Open Source",
                 desc: "Free and extensible. Self-host or contribute to the community.",
               },
+          
               {
-                title: "🧠 Smart Drawing Tools",
-                desc: "Draw shapes, arrows, and text with snap-to-grid precision.",
-              },
-              {
-                title: "💾 Autosave",
+                title: "Autosave",
                 desc: "All your sketches are saved locally and synced in real time.",
               },
               {
-                title: "⚡ Lightning Fast",
+                title: "Lightning Fast",
                 desc: "Optimized performance with instant rendering and smooth interactions.",
               },
               {
-                title: "🌐 Lightweight",
+                title: "Lightweight",
                 desc: "No installs, no bloat. Works in any modern browser.",
               },
             ].map(({ title, desc }, idx) => (
@@ -77,13 +71,12 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* CTA Section */}
       <section className="py-20 px-6 text-center border-t border-gray-800">
         <h2 className="text-4xl font-bold mb-6 text-white">
           Ready to Start Drawing?
         </h2>
         <p className="text-gray-400 text-lg max-w-2xl mx-auto mb-8">
-          Join thousands of creators using DrawIt for real-time collaboration
+          Start using DrawIt for real-time collaboration
           and seamless sketching.
         </p>
         <Link href="/signup">
@@ -93,11 +86,10 @@ export default function LandingPage() {
         </Link>
       </section>
 
-      {/* Footer */}
       <footer className="py-8 border-t border-gray-800 text-center text-gray-500 text-sm">
         © {new Date().getFullYear()} DrawIt — Built with ❤️ by{" "}
         <a
-          href="https://github.com/yourusername"
+          href="https://github.com/TajinderS22"
           target="_blank"
           rel="noopener noreferrer"
           className="underline hover:text-white"
