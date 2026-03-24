@@ -27,7 +27,7 @@ model Room {
 }
 
 model Users {
-  id                       String   @id
+  id                       String   @id @default(uuid())
   username                 String?  @unique
   firstname                String
   lastname                 String
