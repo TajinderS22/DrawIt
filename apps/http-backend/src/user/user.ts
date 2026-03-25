@@ -31,13 +31,12 @@ userRouter.post("/signup", async (req, res) => {
   const data = req.body;
   const existingUser = await db.users.findFirst({
     where: {
-      email: data.email,
-      username: data.username,
+      OR: [{ email: data.email }, { username: data.username }],
     },
   });
   try {
     if (existingUser) {
-      res.status(301).json({
+      res.status(200).json({
         message: "User Already registered",
       });
       return;
@@ -57,7 +56,7 @@ userRouter.post("/signup", async (req, res) => {
       data,
     });
     if (createUser) {
-      res.status(200).json({
+      res.status(201).json({
         message: "User Successfully Registered.",
       });
     }
@@ -103,13 +102,13 @@ userRouter.post("/signin", async (req, res) => {
     const token = jwt.sign({ id: user.id }, JWT_USER_PASSWORD);
     res.status(200).json({
       message: "User Logged in succussfully.",
-      user:{
-        id:user.id,
-        username:user.username,
-        firstname:user.firstname,
+      user: {
+        id: user.id,
+        username: user.username,
+        firstname: user.firstname,
         lastname: user.lastname,
         email: user.email,
-        createdAt:user.createdAt,
+        createdAt: user.createdAt,
       },
       jwt: token,
     });
@@ -155,23 +154,22 @@ userRouter.post(
         },
       });
 
-      if(room?.adminId!=userId){
+      if (room?.adminId != userId) {
         return res.status(200).json({
-          authorized:false,
-          message:"You are not the admin of this room "
-        })
+          authorized: false,
+          message: "You are not the admin of this room ",
+        });
       }
 
-      const deleted=await db.room.delete({
-        where:{
-          id:id,
-          adminId:userId
-        }
-      })
-      
-      
+      const deleted = await db.room.delete({
+        where: {
+          id: id,
+          adminId: userId,
+        },
+      });
+
       res.status(200).json({
-        authorized:true,
+        authorized: true,
         deleted,
       });
     } catch (error) {

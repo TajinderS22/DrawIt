@@ -17,16 +17,15 @@ const AuthPage = ({ isSignin }: { isSignin: boolean }) => {
   const router = useRouter();
   const [AlertMessage, setAlertMessage] = useState("");
   const [AlertType, setAlertType] = useState("");
-  const dispatch=useDispatch()
+  const dispatch = useDispatch();
 
-  const user=useActiveSession()
+  const user = useActiveSession();
 
-
-  useEffect(()=>{
-    if(user){
-      router.push("/dashboard")
+  useEffect(() => {
+    if (user) {
+      router.push("/dashboard");
     }
-  },[user])
+  }, [user]);
 
   const signinUser = async () => {
     const data = {
@@ -35,12 +34,12 @@ const AuthPage = ({ isSignin }: { isSignin: boolean }) => {
     };
     try {
       const response = await axios.post(BACKEND_URL + `/user/signin`, data);
-      
+
       if (response.status === 200) {
         localStorage.setItem("jwt", response.data.jwt);
         setAlertMessage("Signed in successfully!");
         setAlertType("success");
-        dispatch(setUser(response.data.user))
+        dispatch(setUser(response.data.user));
         setTimeout(() => {
           router.push("/dashboard");
         }, 1500);
@@ -65,12 +64,19 @@ const AuthPage = ({ isSignin }: { isSignin: boolean }) => {
     };
     try {
       const response = await axios.post(BACKEND_URL + `/user/signup`, data);
-      if (response.status === 200) {
+      if (response.status === 201) {
         setAlertMessage("signed up successfully!");
         setAlertType("success");
         setTimeout(() => {
-          router.push("/chat");
+          router.push("/signin");
         }, 1500);
+      } else if (response.status == 200) {
+        console.log(response);
+        setAlertMessage(response.data.message);
+        setAlertType("failure");
+        setTimeout(() => {
+          (setAlertMessage(""), setAlertType(""));
+        }, 3000);
       }
     } catch (error) {
       setAlertMessage("Please try again.");

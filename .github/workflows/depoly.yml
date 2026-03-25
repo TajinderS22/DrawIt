@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout (for CI context only)
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup SSH
@@ -46,13 +46,14 @@ jobs:
 
 
             npm install -g pm2
-
+            npm i -g pnpm 
 
 
             echo '--- Node version ---'
             node -v
             npm -v
             pm2 -v
+            pnpm -v 
 
             echo '--- Switching to project directory ---'
             cd /home/ubuntu/DrawIt
@@ -64,15 +65,15 @@ jobs:
             git pull origin main
 
             echo '--- Installing dependencies ---'
-            npm install
+            pnpm install
 
             echo '--- Generating Prisma client ---'
             cd packages/db
             npx prisma generate
-            npx tsc
             cd ../../
 
             echo '--- Building the app ---'
+            pnpm i 
             npm run build:force 
 
             echo '--- Restarting app ---'
