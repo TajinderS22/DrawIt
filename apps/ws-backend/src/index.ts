@@ -217,7 +217,6 @@ wss.on("connection", (ws, request) => {
              if (pendingIdx !== -1) {
                 pendingNewShapes.splice(pendingIdx, 1);
              } else {
-                // Background deep search if no ID was found (fallback)
                 (async () => {
                    try {
                      const chats = await db.chat.findMany({ where: { roomId } });

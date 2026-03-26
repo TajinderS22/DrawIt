@@ -202,9 +202,17 @@ export class Game {
 
       } else if (message.type === "shape_move" || message.type === "shape_move_end") {
         if (message.userId !== this.userId) {
-          const serverEntry = this.allShapesFromServer?.find(
-            (s: any) => s.id === message.shapeId,
-          );
+          let serverEntry = null;
+          if (message.shapeId) {
+            serverEntry = this.allShapesFromServer?.find(
+              (s: any) => s.id === message.shapeId,
+            );
+          } else if (message.shape?.clientId) {
+            serverEntry = this.allShapesFromServer?.find(
+              (s: any) => s.shape?.clientId === message.shape.clientId,
+            );
+          }
+
           if (serverEntry) {
             const idx = this.existingShapes.findIndex((s: any) =>
               this.areShapesEqual(s, serverEntry.shape),
@@ -213,6 +221,13 @@ export class Game {
               this.existingShapes[idx] = message.shape;
             }
             serverEntry.shape = message.shape;
+          } else if (message.shape?.clientId) {
+            const idx = this.existingShapes.findIndex((s: any) =>
+              s.clientId === message.shape.clientId,
+            );
+            if (idx !== -1) {
+              this.existingShapes[idx] = message.shape;
+            }
           }
           this.reRenderCanvas();
         }
@@ -966,10 +981,17 @@ export class Game {
       }),
     );
 
-    if (this.dragShapeServerId && this.allShapesFromServer) {
-      const entry = this.allShapesFromServer.find(
-        (s: any) => s.id === this.dragShapeServerId,
-      );
+    if (this.allShapesFromServer) {
+      let entry = null;
+      if (this.dragShapeServerId) {
+        entry = this.allShapesFromServer.find(
+          (s: any) => s.id === this.dragShapeServerId,
+        );
+      } else if (this.selectedShape.clientId) {
+        entry = this.allShapesFromServer.find(
+          (s: any) => s.shape?.clientId === this.selectedShape.clientId,
+        );
+      }
       if (entry) {
         entry.shape = this.deepCopyShape(this.selectedShape);
       }
