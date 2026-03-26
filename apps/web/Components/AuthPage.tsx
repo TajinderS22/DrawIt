@@ -55,12 +55,28 @@ const AuthPage = ({ isSignin }: { isSignin: boolean }) => {
   };
 
   const SignupUser = async () => {
+    const firstname = FirstNameRef?.current?.value;
+    const lastname = LastNameRef?.current?.value;
+    const username = usernameRef?.current?.value;
+    const email = emailRef?.current?.value;
+    const password = passwordRef?.current?.value;
+
+    if (!firstname || !lastname || !username || !email || !password) {
+      setAlertMessage("All fields are required!");
+      setAlertType("failure");
+      setTimeout(() => {
+        setAlertMessage("");
+        setAlertType("");
+      }, 3000);
+      return;
+    }
+
     const data = {
-      firstname: FirstNameRef?.current?.value,
-      lastname: LastNameRef?.current?.value,
-      username: usernameRef?.current?.value,
-      email: emailRef?.current?.value,
-      password: passwordRef?.current?.value,
+      firstname,
+      lastname,
+      username,
+      email,
+      password,
     };
     try {
       const response = await axios.post(BACKEND_URL + `/user/signup`, data);

@@ -8,9 +8,10 @@ import {
   Pencil,
   RectangleHorizontalIcon,
   Download,
+  ALargeSmall,
 } from "lucide-react";
 
-type Shape = "circle" | "rectangle" | "pencil" | "eraser" | "select";
+type Shape = "circle" | "rectangle" | "pencil" | "eraser" | "select" | "text";
 
 const ToolBar = ({ selectedTool }: { selectedTool: Shape }) => {
   const dispatch = useDispatch();
@@ -54,6 +55,14 @@ const ToolBar = ({ selectedTool }: { selectedTool: Shape }) => {
           dispatch(setSelectedTool("circle"));
         }}
         activated={selectedTool == "circle"}
+      ></IconButton>
+
+      <IconButton
+        icon={<ALargeSmall />}
+        activated={selectedTool == "text"}
+        onClick={() => {
+          dispatch(setSelectedTool("text"));
+        }}
       ></IconButton>
 
       <IconButton

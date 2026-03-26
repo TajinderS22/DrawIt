@@ -23,6 +23,93 @@ interface User {
 
 const users: User[] = [];
 
+const pendingShapeUpdates: Map<number, string> = new Map();
+
+setInterval(async () => {
+  if (pendingShapeUpdates.size === 0) return;
+
+  const updates = Array.from(pendingShapeUpdates.entries());
+  pendingShapeUpdates.clear();
+
+  try {
+    await db.$transaction(
+      updates.map(([id, message]) =>
+        db.chat.update({ where: { id }, data: { message } })
+      )
+    );
+  } catch (err) {
+    console.error("Batch shape update failed:", err);
+  }
+}, 2000);
+
+interface PendingNewShape {
+  message: string;
+  roomId: number;
+  userId: string;
+  shape: any;
+  senderWs: WebSocket;
+}
+
+const pendingNewShapes: PendingNewShape[] = [];
+
+setInterval(async () => {
+  if (pendingNewShapes.length === 0) return;
+
+  const batch = pendingNewShapes.splice(0, pendingNewShapes.length);
+
+  try {
+    const results = await db.$transaction(
+      batch.map((item) =>
+        db.chat.create({
+          data: {
+            message: item.message,
+            roomId: item.roomId,
+            userId: item.userId,
+          },
+        })
+      )
+    );
+
+    results.forEach((created, idx) => {
+      const item = batch[idx]!;
+      users.forEach((u) => {
+        if (u.rooms.includes(String(item.roomId))) {
+          u.ws.send(
+            JSON.stringify({
+              type: "shape_saved",
+              chatId: created.id,
+              shape: item.shape,
+              roomId: item.roomId,
+              userId: item.userId,
+            })
+          );
+        }
+      });
+    });
+  } catch (err) {
+    console.error("Batch new shape creation failed:", err);
+  }
+}, 2000);
+
+const pendingShapeDeletions = new Set<number>();
+
+setInterval(async () => {
+  if (pendingShapeDeletions.size === 0) return;
+
+  const deletions = Array.from(pendingShapeDeletions);
+  pendingShapeDeletions.clear();
+
+  try {
+    await db.chat.deleteMany({
+      where: {
+        id: { in: deletions },
+      },
+    });
+  } catch (err) {
+    console.error("Batch shape deletion failed:", err);
+  }
+}, 2000);
+
 const checkUser = (token: string) => {
   if (!token) {
     return null;
@@ -100,56 +187,175 @@ wss.on("connection", (ws, request) => {
         if (parsedData.type == "chat_delete_shape") {
           const roomId = parsedData.roomId;
           const userId = user.userId;
-
-          const deletIds: number[] = [];
-
           const data = JSON.parse(parsedData.message);
 
-    
-          let MessageToBeDeletedId: number | null = null;
-          if (data && data.data && data.data.id) {
-            MessageToBeDeletedId = data.data.id;
-          } else if (data && data.data && data.data.shape) {
-            // Find the chat record in the DB that matches the shape payload
-            const chats = await db.chat.findMany({ where: { roomId } });
-            for (const c of chats) {
-              try {
-                const parsed = JSON.parse(c.message);
-                if (
-                  parsed &&
-                  parsed.shape &&
-                  JSON.stringify(parsed.shape) ===
-                    JSON.stringify(data.data.shape)
-                ) {
-                  MessageToBeDeletedId = c.id;
-                  break;
-                }
-              } catch (err) {
-              }
-            }
-          }
-
-          if (MessageToBeDeletedId != null) {
-            await db.chat.delete({ where: { id: MessageToBeDeletedId } });
-          } else {
-            console.warn(
-              "chat_delete_shape: no matching chat found for delete request",
-              data,
-            );
-          }
-
-          users.forEach((user) => {
-            if (user.rooms.includes(roomId)) {
-              user.ws.send(
+          // Broadcast deletion immediately to other users in the room
+          users.forEach((u) => {
+            if (u.rooms.includes(roomId) && u.ws !== ws) {
+              u.ws.send(
                 JSON.stringify({
                   type: "chat_delete_shape_success",
-                  message: "Shape Deleted",
                   roomId,
                   userId,
                   shape: data.data,
                 }),
               );
             }
+          });
+
+          const shapeIdToDelete = data?.data?.id;
+
+          if (shapeIdToDelete) {
+             pendingShapeDeletions.add(shapeIdToDelete);
+          } else if (data?.data?.shape?.clientId) {
+             const pendingIdx = pendingNewShapes.findIndex(p => p.shape.clientId === data.data.shape.clientId);
+             if (pendingIdx !== -1) {
+                pendingNewShapes.splice(pendingIdx, 1);
+             }
+          } else if (data?.data?.shape) {
+             const pendingIdx = pendingNewShapes.findIndex(p => JSON.stringify(p.shape) === JSON.stringify(data.data.shape));
+             if (pendingIdx !== -1) {
+                pendingNewShapes.splice(pendingIdx, 1);
+             } else {
+                // Background deep search if no ID was found (fallback)
+                (async () => {
+                   try {
+                     const chats = await db.chat.findMany({ where: { roomId } });
+                     for (const c of chats) {
+                         try {
+                             const parsed = JSON.parse(c.message);
+                             if (parsed?.shape && JSON.stringify(parsed.shape) === JSON.stringify(data.data.shape)) {
+                                 pendingShapeDeletions.add(c.id);
+                                 break;
+                             }
+                         } catch (err) {}
+                     }
+                   } catch (err) {
+                     console.error("Background delete lookup failed:", err);
+                   }
+                })();
+             }
+          }
+        }
+
+        if (parsedData.type == "shape_move") {
+          const roomId = parsedData.roomId;
+          const userId = user.userId;
+
+          users.forEach((u) => {
+            if (u.rooms.includes(roomId) && u.ws !== ws) {
+              u.ws.send(
+                JSON.stringify({
+                  type: "shape_move",
+                  shapeId: parsedData.shapeId,
+                  shape: parsedData.shape,
+                  roomId,
+                  userId,
+                }),
+              );
+            }
+          });
+        }
+
+        if (parsedData.type == "cursor_move") {
+          const roomId = parsedData.roomId;
+          const userId = user.userId;
+
+          users.forEach((u) => {
+            if (u.rooms.includes(roomId) && u.ws !== ws) {
+              u.ws.send(
+                JSON.stringify({
+                  type: "cursor_move",
+                  x: parsedData.x,
+                  y: parsedData.y,
+                  name: parsedData.name,
+                  roomId,
+                  userId,
+                }),
+              );
+            }
+          });
+        }
+
+        if (parsedData.type == "shape_move_end") {
+          const roomId = parsedData.roomId;
+          const userId = user.userId;
+          const shapeId = parsedData.shapeId;
+          const shape = parsedData.shape;
+
+          if (shapeId) {
+            const newMessage = JSON.stringify({ shape });
+            pendingShapeUpdates.set(shapeId, newMessage);
+          } else if (shape?.clientId) {
+            const pendingIdx = pendingNewShapes.findIndex(p => p.shape.clientId === shape.clientId);
+            if (pendingIdx !== -1) {
+               const pendingItem = pendingNewShapes[pendingIdx];
+               if (pendingItem) {
+                 pendingItem.shape = shape;
+                 pendingItem.message = JSON.stringify({ shape });
+               }
+            }
+          }
+
+          users.forEach((u) => {
+            if (u.rooms.includes(roomId)) {
+              u.ws.send(
+                JSON.stringify({
+                  type: "shape_move_end",
+                  shapeId,
+                  shape,
+                  roomId,
+                  userId,
+                }),
+              );
+            }
+          });
+        }
+
+        if (parsedData.type === "shape_drawing") {
+          const roomId = parsedData.roomId;
+          const userId = user.userId;
+
+          users.forEach((u) => {
+            if (u.rooms.includes(roomId) && u.ws !== ws) {
+              u.ws.send(
+                JSON.stringify({
+                  type: "shape_drawing",
+                  shape: parsedData.shape,
+                  roomId,
+                  userId,
+                }),
+              );
+            }
+          });
+        }
+
+        if (parsedData.type === "shape_draw_end") {
+          const roomId = parsedData.roomId;
+          const message = parsedData.message;
+          const userId = user.userId;
+          const parsedMessage = JSON.parse(message);
+          const shape = parsedMessage.shape;
+
+          users.forEach((u) => {
+            if (u.rooms.includes(roomId) && u.ws !== ws) {
+              u.ws.send(
+                JSON.stringify({
+                  type: "shape_draw_end",
+                  shape,
+                  roomId,
+                  userId,
+                }),
+              );
+            }
+          });
+
+          pendingNewShapes.push({
+            message,
+            roomId: Number(roomId),
+            userId,
+            shape,
+            senderWs: ws,
           });
         }
 
