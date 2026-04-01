@@ -10,7 +10,7 @@ import { set } from "react-hook-form";
 import Signin from "../app/signin/page";
 import Navbar from "./Navbar";
 import { useDispatch } from "react-redux";
-import { setUser } from "../redux/UserSlice";
+import { setUser } from "../redux/slices/UserSlice";
 import useActiveSession from "../Hooks/useActiveSession";
 
 const AuthPage = ({ isSignin }: { isSignin: boolean }) => {
@@ -87,7 +87,6 @@ const AuthPage = ({ isSignin }: { isSignin: boolean }) => {
           router.push("/signin");
         }, 1500);
       } else if (response.status == 200) {
-        console.log(response);
         setAlertMessage(response.data.message);
         setAlertType("failure");
         setTimeout(() => {

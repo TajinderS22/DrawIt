@@ -8,17 +8,19 @@ import CanvasDisplayCard from "../../Components/CanvasDisplayCard";
 import { Loader, X } from "lucide-react";
 import useJwt from "../../Hooks/useJwt";
 import Navbar from "../../Components/Navbar";
-import { useSelector } from "react-redux";
-import { RootState } from "../../redux/store";
+
 import useActiveSession from "../../Hooks/useActiveSession";
 import Loading from "../../Components/Loading";
 import Alert from "@repo/ui/Alert";
+import { useSelector } from "react-redux";
+import { RootState } from "../../redux/store";
 
 const Page = () => {
   const router = useRouter();
 
   const jwt = useJwt();
-  const user = useActiveSession();
+  const user=useActiveSession()
+  // const user= useSelector((state:RootState)=>state.user)
 
   const joinRoomRef = useRef<HTMLInputElement>(null);
   const createRoomRef = useRef<HTMLInputElement>(null);
@@ -104,6 +106,7 @@ const Page = () => {
   if (loading) {
     return <Loading />;
   }
+
 
   return (
     <div className="p-2 max-w-[1920px] mx-auto ">

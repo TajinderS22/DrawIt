@@ -4,8 +4,7 @@ import { RootState } from "../redux/store";
 import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { LogOutIcon } from "lucide-react";
-import useActiveSession from "../Hooks/useActiveSession";
-import { clearUser } from "../redux/UserSlice";
+import { clearUser } from "../redux/slices/UserSlice";
 
 const Navbar = () => {
   const user = useSelector((state: RootState) => state.user);

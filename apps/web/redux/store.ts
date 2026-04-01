@@ -1,11 +1,11 @@
 import { configureStore } from "@reduxjs/toolkit";
-import userReducer from "./UserSlice"; // ✅ default import
-import setSelectedToolReducer  from "./slices/selectedToolSlice";
+import userReducer from "./slices/UserSlice"; // ✅ default import
+import setSelectedToolReducer from "./slices/selectedToolSlice";
 
 export const store = configureStore({
   reducer: {
     user: userReducer as any,
-    selectedTool:setSelectedToolReducer
+    selectedTool: setSelectedToolReducer,
   },
 });
 

@@ -8,11 +8,13 @@ import { useParams } from "next/navigation";
 import ToolBar from "../../../Components/ToolBar";
 import useJwt from "../../../Hooks/useJwt";
 import RoomCanvas from "../../../Components/RoomCanvas";
+import useActiveSession from "../../../Hooks/useActiveSession";
 
 const Page = ({}) => {
   const params = useParams();
 
   const jwt = useJwt();
+  useActiveSession();
 
   const roomId = Number(params?.roomId);
 

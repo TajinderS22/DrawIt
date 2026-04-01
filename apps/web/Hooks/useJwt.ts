@@ -1,24 +1,29 @@
 "use client";
 import { usePathname, useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
+import { useSelector } from "react-redux";
+import { RootState } from "../redux/store";
 
 const useJwt = () => {
   const [token, setToken] = useState<string | null>(null);
-  const router = useRouter();
+  // const router = useRouter();
   const pathname = usePathname();
+  const user = useSelector((state: RootState) => state.user);
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
+  const setJwtToken = () => {
+    if(typeof window !== "undefined"){
       const jwtToken = localStorage.getItem("jwt");
       if (jwtToken) {
         setToken(jwtToken);
       } else {
-        if (!pathname.includes("sign")) {
-          router.push("/signin");
-        }
+        setToken(null);
       }
     }
-  }, [pathname, router]);
+  };
+
+  useEffect(() => {
+    setJwtToken();
+  }, [pathname,user]);
 
   return token;
 };

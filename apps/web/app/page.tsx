@@ -94,7 +94,7 @@ export default function LandingPage() {
           rel="noopener noreferrer"
           className="underline hover:text-white"
         >
-          TajinderSingh
+          Tajinder Singh
         </a>
       </footer>
     </div>
