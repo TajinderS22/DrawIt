@@ -271,7 +271,7 @@ export type UsersScalarWhereWithAggregatesInput = {
 }
 
 export type UsersCreateInput = {
-  id: string
+  id?: string
   username?: string | null
   firstname: string
   lastname: string
@@ -285,7 +285,7 @@ export type UsersCreateInput = {
 }
 
 export type UsersUncheckedCreateInput = {
-  id: string
+  id?: string
   username?: string | null
   firstname: string
   lastname: string
@@ -327,7 +327,7 @@ export type UsersUncheckedUpdateInput = {
 }
 
 export type UsersCreateManyInput = {
-  id: string
+  id?: string
   username?: string | null
   firstname: string
   lastname: string
@@ -478,7 +478,7 @@ export type NullableStringFieldUpdateOperationsInput = {
 }
 
 export type UsersCreateWithoutChatInput = {
-  id: string
+  id?: string
   username?: string | null
   firstname: string
   lastname: string
@@ -491,7 +491,7 @@ export type UsersCreateWithoutChatInput = {
 }
 
 export type UsersUncheckedCreateWithoutChatInput = {
-  id: string
+  id?: string
   username?: string | null
   firstname: string
   lastname: string
@@ -546,7 +546,7 @@ export type UsersUncheckedUpdateWithoutChatInput = {
 }
 
 export type UsersCreateWithoutRoom_Room_adminIdToUsersInput = {
-  id: string
+  id?: string
   username?: string | null
   firstname: string
   lastname: string
@@ -559,7 +559,7 @@ export type UsersCreateWithoutRoom_Room_adminIdToUsersInput = {
 }
 
 export type UsersUncheckedCreateWithoutRoom_Room_adminIdToUsersInput = {
-  id: string
+  id?: string
   username?: string | null
   firstname: string
   lastname: string
@@ -577,7 +577,7 @@ export type UsersCreateOrConnectWithoutRoom_Room_adminIdToUsersInput = {
 }
 
 export type UsersCreateWithoutRoom_UserRoomsInput = {
-  id: string
+  id?: string
   username?: string | null
   firstname: string
   lastname: string
@@ -590,7 +590,7 @@ export type UsersCreateWithoutRoom_UserRoomsInput = {
 }
 
 export type UsersUncheckedCreateWithoutRoom_UserRoomsInput = {
-  id: string
+  id?: string
   username?: string | null
   firstname: string
   lastname: string

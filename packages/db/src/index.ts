@@ -1,7 +1,17 @@
-import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "./generated/prisma/client.js";
+import dotenv from "dotenv";
+import path from "node:path"
+
+console.log(path.resolve("../../",".env"));
+
+dotenv.config({
+    path:"../../.env"
+})
+
 import pg from "pg"
+
+
 
 declare global {
   var prisma: PrismaClient | undefined;

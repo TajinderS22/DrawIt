@@ -3,10 +3,13 @@ import jwt, { JwtPayload } from "jsonwebtoken";
 import { JWT_USER_PASSWORD } from "@repo/backend-common";
 import { getPrisma } from "@repo/db";
 
-import dotenv from "dotenv"
+import dotenv from "dotenv";
 
-dotenv.config()
 
+
+dotenv.config({
+    path:"../../.env"
+})
 
 
 const wss = new WebSocketServer({

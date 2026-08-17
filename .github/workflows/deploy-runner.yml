@@ -1,0 +1,593 @@
+name: Deploy on Prod
+
+on:
+  push:
+    branches:
+      - tunnel
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+
+      # ============================================================
+      # Checkout repository
+      # ============================================================
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+
+      # ============================================================
+      # Setup Node.js
+      # ============================================================
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+
+      # ============================================================
+      # Setup pnpm
+      # ============================================================
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+
+
+      # ============================================================
+      # Show versions
+      # ============================================================
+      - name: Check Node and pnpm versions
+        run: |
+          echo "Node:"
+          node -v
+
+          echo "pnpm:"
+          pnpm -v
+
+
+      # ============================================================
+      # Install root dependencies
+      # ============================================================
+      - name: Install root dependencies
+        run: |
+          pnpm install --frozen-lockfile
+
+
+      # ============================================================
+      # Install http-backend dependencies
+      # ============================================================
+      - name: Install client dependencies
+        working-directory: apps/http-backend
+        run: |
+          pnpm install --frozen-lockfile
+
+      # ============================================================
+      # Install ws-backend dependencies
+      # ============================================================
+      - name: Install client dependencies
+        working-directory: apps/ws-backend
+        run: |
+          pnpm install --frozen-lockfile
+
+      # ============================================================
+      # Install web dependencies
+      # ============================================================
+      - name: Install client dependencies
+        working-directory: apps/web
+        run: |
+          pnpm install --frozen-lockfile
+
+
+      # ============================================================
+      # Install db dependencies
+      # ============================================================
+      - name: Install client dependencies
+        working-directory: packages/db
+        run: |
+          pnpm install --frozen-lockfile
+
+      # ============================================================
+      # Install backend-common dependencies
+      # ============================================================
+      - name: Install client dependencies
+        working-directory: packages/backend-common
+        run: |
+          pnpm install --frozen-lockfile
+
+
+
+      # ============================================================
+      # Build packages/backend-common application
+      # ============================================================
+      - name: Build backend-common app
+        working-directory: packages/backend-common
+        run: |
+          pnpm run build
+
+
+      # ============================================================
+      # Build packages/db application
+      # ============================================================
+      - name: Build db app
+        working-directory: packages/db
+        run: |
+          pnpm run build
+
+      # ============================================================
+      # Build apps/web application
+      # ============================================================
+      - name: Build next web app
+        working-directory: apps/web 
+        run: |
+          pnpm run build
+
+
+
+      # ============================================================
+      # Build apps/http-backend application
+      # ============================================================
+      - name: Build http-backend app
+        working-directory: apps/http-backend
+        run: |
+          pnpm run build
+
+      # ============================================================
+      # Build apps/ws-backend application
+      # ============================================================
+      - name: Build ws-backend app
+        working-directory: apps/ws-backend
+        run: |
+          pnpm run build
+
+
+      # ============================================================
+      # Create complete deployment archive
+      #
+      # Includes:
+      #   .git
+      #   .github
+      #   source code
+      #   node_modules
+      #   build files
+      #   package files
+      #   everything else in repository
+      #
+      # GitHub runner does not contain production .env,
+      # so production .env will NOT be overwritten.
+      # ============================================================
+      - name: Create deployment archive
+        run: |
+          echo "========================================"
+          echo "Creating deployment archive"
+          echo "========================================"
+
+          tar \
+            --exclude='./deploy.tar.gz' \
+            -czf /tmp/DrawIt-deploy.tar.gz \
+            .
+
+
+      # ============================================================
+      # Check archive
+      # ============================================================
+      - name: Check deployment package
+        run: |
+          echo "========================================"
+          echo "Deployment package"
+          echo "========================================"
+
+          ls -lh /tmp/DrawIt-deploy.tar.gz
+
+
+      # ============================================================
+      # Setup SSH
+      # ============================================================
+      - name: Setup SSH
+        env:
+          HOST: ${{ secrets.PROD_HOST }}
+          USER: ${{ secrets.PROD_USER }}
+          KEY: ${{ secrets.PROD_SSH_KEY }}
+
+        run: |
+          echo "$KEY" > key.pem
+          chmod 600 key.pem
+
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+
+          cat >> ~/.ssh/config <<EOF
+          Host prod
+            HostName $HOST
+            User $USER
+            IdentityFile $(pwd)/key.pem
+            StrictHostKeyChecking no
+          EOF
+
+
+      # ============================================================
+      # Upload deployment package
+      # ============================================================
+      - name: Upload deployment package
+        run: |
+          scp \
+            /tmp/DrawIt-deploy.tar.gz \
+            prod:/tmp/DrawIt-deploy.tar.gz
+
+
+      # ============================================================
+      # Deploy on VM
+      # ============================================================
+      - name: Deploy on VM
+        run: |
+          ssh prod <<'EOF'
+
+            set -e
+
+            APP_DIR="/home/ubuntu/DrawIt"
+            ENV_FILE="$APP_DIR/.env"
+            ENV_BACKUP="/tmp/DrawIt.env"
+
+
+            # ========================================================
+            # Starting deployment
+            # ========================================================
+            echo "========================================"
+            echo "Starting deployment"
+            echo "========================================"
+
+
+            # ========================================================
+            # Create application directory if it doesn't exist
+            # ========================================================
+            mkdir -p "$APP_DIR"
+
+
+            # ========================================================
+            # Backup production .env
+            # ========================================================
+            echo "========================================"
+            echo "Preserving .env"
+            echo "========================================"
+
+            if [ -f "$ENV_FILE" ]; then
+              cp "$ENV_FILE" "$ENV_BACKUP"
+              echo ".env backed up."
+            else
+              echo "WARNING: .env does not exist."
+            fi
+
+
+            # ========================================================
+            # Remove old application
+            #
+            # Everything is deleted.
+            # .env is restored afterward.
+            # ========================================================
+            echo "========================================"
+            echo "Removing old application"
+            echo "========================================"
+
+            find "$APP_DIR" \
+              -mindepth 1 \
+              -maxdepth 1 \
+              -exec rm -rf {} +
+
+
+            # ========================================================
+            # Extract new deployment
+            # ========================================================
+            echo "========================================"
+            echo "Extracting new deployment"
+            echo "========================================"
+
+            tar \
+              -xzf /tmp/DrawIt-deploy.tar.gz \
+              -C "$APP_DIR"
+
+
+            # ========================================================
+            # Remove uploaded archive
+            # ========================================================
+            rm -f /tmp/DrawIt-deploy.tar.gz
+
+
+            # ========================================================
+            # Restore production .env
+            # ========================================================
+            echo "========================================"
+            echo "Restoring production .env"
+            echo "========================================"
+
+            if [ -f "$ENV_BACKUP" ]; then
+
+              cp \
+                "$ENV_BACKUP" \
+                "$APP_DIR/.env"
+
+              rm -f "$ENV_BACKUP"
+
+              echo ".env restored."
+
+            else
+
+              echo "WARNING: No production .env was found."
+
+            fi
+
+
+            # ========================================================
+            # Enter application directory
+            # ========================================================
+            cd "$APP_DIR"
+
+
+            # ========================================================
+            # Setup Node / NVM / pnpm
+            # ========================================================
+            echo "========================================"
+            echo "Setting up Node environment"
+            echo "========================================"
+
+            export NVM_DIR="$HOME/.nvm"
+
+            if [ -s "$NVM_DIR/nvm.sh" ]; then
+              source "$NVM_DIR/nvm.sh"
+            fi
+
+
+            # ========================================================
+            # Setup pnpm
+            #
+            # Corepack is available with modern Node.js versions.
+            # ========================================================
+            if command -v corepack >/dev/null 2>&1; then
+              corepack enable
+            fi
+
+
+            # Make global npm/pnpm binaries available
+            if command -v npm >/dev/null 2>&1; then
+              export PATH="$(npm prefix -g)/bin:$PATH"
+            fi
+
+
+            echo "Node:"
+            node -v
+
+            echo "pnpm:"
+            if command -v pnpm >/dev/null 2>&1; then
+              pnpm -v
+            else
+              echo "WARNING: pnpm not found on production server."
+            fi
+
+            echo "PM2:"
+            which pm2
+            pm2 -v
+
+
+            # ========================================================
+            # Verify deployment
+            # ========================================================
+            echo "========================================"
+            echo "Verifying deployment"
+            echo "========================================"
+
+
+            # ========================================================
+            # Repository
+            # ========================================================
+            echo ""
+            echo "Repository:"
+            du -sh .
+
+
+            # ========================================================
+            # Root node_modules
+            # ========================================================
+            echo ""
+            echo "Root node_modules:"
+
+            if [ -d "node_modules" ]; then
+              du -sh node_modules
+            else
+              echo "node_modules not found"
+            fi
+
+
+            # ========================================================
+            # http-backend
+            # ========================================================
+            echo ""
+            echo "http-backend:"
+
+            if [ -d "apps/http-backend" ]; then
+              du -sh apps/http-backend
+            else
+              echo "apps/http-backend not found"
+            fi
+
+
+            echo ""
+            echo "http-backend build:"
+
+            if [ -d "apps/http-backend/dist" ]; then
+              du -sh apps/http-backend/dist
+            elif [ -d "apps/http-backend/build" ]; then
+              du -sh apps/http-backend/build
+            else
+              echo "Build directory not found"
+            fi
+
+
+            # ========================================================
+            # ws-backend
+            # ========================================================
+            echo ""
+            echo "ws-backend:"
+
+            if [ -d "apps/ws-backend" ]; then
+              du -sh apps/ws-backend
+            else
+              echo "apps/ws-backend not found"
+            fi
+
+
+            echo ""
+            echo "ws-backend build:"
+
+            if [ -d "apps/ws-backend/dist" ]; then
+              du -sh apps/ws-backend/dist
+            elif [ -d "apps/ws-backend/build" ]; then
+              du -sh apps/ws-backend/build
+            else
+              echo "Build directory not found"
+            fi
+
+
+            # ========================================================
+            # web
+            # ========================================================
+            echo ""
+            echo "web:"
+
+            if [ -d "apps/web" ]; then
+              du -sh apps/web
+            else
+              echo "apps/web not found"
+            fi
+
+
+            echo ""
+            echo "web build:"
+
+            if [ -d "apps/web/dist" ]; then
+              du -sh apps/web/dist
+            elif [ -d "apps/web/build" ]; then
+              du -sh apps/web/build
+            else
+              echo "Build directory not found"
+            fi
+
+
+            # ========================================================
+            # db
+            # ========================================================
+            echo ""
+            echo "db:"
+
+            if [ -d "packages/db" ]; then
+              du -sh packages/db
+            else
+              echo "packages/db not found"
+            fi
+
+
+            echo ""
+            echo "db build:"
+
+            if [ -d "packages/db/dist" ]; then
+              du -sh packages/db/dist
+            elif [ -d "packages/db/build" ]; then
+              du -sh packages/db/build
+            else
+              echo "Build directory not found"
+            fi
+
+
+            # ========================================================
+            # backend-common
+            # ========================================================
+            echo ""
+            echo "backend-common:"
+
+            if [ -d "packages/backend-common" ]; then
+              du -sh packages/backend-common
+            else
+              echo "packages/backend-common not found"
+            fi
+
+
+            echo ""
+            echo "backend-common build:"
+
+            if [ -d "packages/backend-common/dist" ]; then
+              du -sh packages/backend-common/dist
+            elif [ -d "packages/backend-common/build" ]; then
+              du -sh packages/backend-common/build
+            else
+              echo "Build directory not found"
+            fi
+
+
+            # ========================================================
+            # Client
+            # ========================================================
+            echo ""
+            echo "Client:"
+
+            if [ -d "client/DrawIt" ]; then
+              du -sh client/DrawIt
+            else
+              echo "client/DrawIt not found"
+            fi
+
+
+            echo ""
+            echo "Client build:"
+
+            if [ -d "client/DrawIt/dist" ]; then
+              du -sh client/DrawIt/dist
+            elif [ -d "client/DrawIt/build" ]; then
+              du -sh client/DrawIt/build
+            else
+              echo "Build directory not found"
+            fi
+
+
+            # ========================================================
+            # .env
+            # ========================================================
+            echo ""
+            echo ".env:"
+
+            if [ -f ".env" ]; then
+              echo ".env exists"
+            else
+              echo "WARNING: .env does not exist"
+            fi
+
+
+            # ========================================================
+            # Restart PM2
+            # ========================================================
+            echo "========================================"
+            echo "Restarting PM2"
+            echo "========================================"
+
+            pm2 restart all --update-env
+
+
+            # ========================================================
+            # PM2 status
+            # ========================================================
+            echo "========================================"
+            echo "PM2 status"
+            echo "========================================"
+
+            pm2 status
+
+
+            # ========================================================
+            # Deployment complete
+            # ========================================================
+            echo "========================================"
+            echo "Deployment complete!"
+            echo "========================================"
+
+          EOF

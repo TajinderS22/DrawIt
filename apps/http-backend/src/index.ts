@@ -1,22 +1,29 @@
 import express from "express";
 import { Router } from "express";
-import {userRouter} from './user/user'
-import cors from 'cors'
+import { userRouter } from "./user/user";
+import cors from "cors";
 
-const app=express();
-const port =process.env.HTTP_SEVER_PORT||3030;
+import dotenv from "dotenv";
 
-app.use(cors())
+dotenv.config({
+  path: "../../.env",
+});
 
-app.use(express.json())
+console.log("port", process.env.HTTP_SEVER_PORT);
 
-app.get("/",(req,res)=>{
-    res.send("Heartbeat")
-})
+const app = express();
+const port = process.env.HTTP_SEVER_PORT || 3030;
 
-app.use('/user',userRouter)
+app.use(cors());
 
+app.use(express.json());
 
-app.listen(port,()=>{
-    console.log(`server is running on port ${port}`)
-})
+app.get("/", (req, res) => {
+  res.send("Heartbeat");
+});
+
+app.use("/user", userRouter);
+
+app.listen(port, () => {
+  console.log(`server is running on port ${port}`);
+});
