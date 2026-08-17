@@ -19,16 +19,6 @@ jobs:
 
 
       # ============================================================
-      # Setup Node.js
-      # ============================================================
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: pnpm
-
-
-      # ============================================================
       # Setup pnpm
       # ============================================================
       - name: Setup pnpm
@@ -36,6 +26,16 @@ jobs:
         with:
           version: 10
           run_install: false
+
+
+      # ============================================================
+      # Setup Node.js
+      # ============================================================
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
 
 
       # ============================================================
@@ -48,8 +48,6 @@ jobs:
 
           echo "pnpm:"
           pnpm -v
-
-
       # ============================================================
       # Install root dependencies
       # ============================================================
@@ -111,15 +109,16 @@ jobs:
 
 
       # ============================================================
-      # Build packages/db application
+      # Build packages/db 
       # ============================================================
       - name: Build db app
         working-directory: packages/db
         run: |
+          pnpx prisma generate 
           pnpm run build
 
       # ============================================================
-      # Build apps/web application
+      # Build apps/web 
       # ============================================================
       - name: Build next web app
         working-directory: apps/web 
